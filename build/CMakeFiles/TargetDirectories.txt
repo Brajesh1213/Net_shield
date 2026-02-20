@@ -1,0 +1,3 @@
+C:/Users/HP/Desktop/rp/build/CMakeFiles/NetSentinel.dir
+C:/Users/HP/Desktop/rp/build/CMakeFiles/edit_cache.dir
+C:/Users/HP/Desktop/rp/build/CMakeFiles/rebuild_cache.dir
