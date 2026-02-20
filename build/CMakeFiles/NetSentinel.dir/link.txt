@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\NetSentinel.dir/objects.a
-C:\MinGW\bin\ar.exe qc CMakeFiles\NetSentinel.dir/objects.a @CMakeFiles\NetSentinel.dir\objects1.rsp
-C:\MinGW\bin\c++.exe -Wl,--whole-archive CMakeFiles\NetSentinel.dir/objects.a -Wl,--no-whole-archive -o NetSentinel.exe -Wl,--out-implib,libNetSentinel.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\NetSentinel.dir\linkLibs.rsp
