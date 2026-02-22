@@ -73,6 +73,13 @@ void Logger::Log(LogLevel level, const std::wstring& message) {
         file_.flush();
     }
 
+    // Only pipe WARNING and above to Electron frontend stdout
+    // INFO/DEBUG go to log file only to avoid flooding the monitor UI
+    if (level >= LogLevel::WARNING) {
+        std::string narrow = Utils::WideToUTF8(oss.str());
+        std::cout << narrow << "\n" << std::flush;
+    }
+
     // Also OutputDebugString for debugging
     OutputDebugStringW((oss.str() + L"\n").c_str());
 }

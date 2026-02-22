@@ -1,7 +1,3 @@
-// SPDX-License-Identifier: MIT
-// Copyright 2026 Brajesh
-// NetSentinel v0.3 - Production Backend
-
 #include <windows.h>
 #include <shlobj.h>
 #include <iostream>
@@ -13,6 +9,7 @@
 #include <ctime>
 #include <clocale>
 #include <locale>
+#include <sstream>
 
 #include "include/netsentinel_common.h"
 #include "src/network/tcp_table.h"
@@ -48,10 +45,19 @@ std::atomic<bool> g_running{true};
 std::atomic<bool> g_paused{false};
 
 // Console handler
+// Helper: convert wstring to UTF-8 string for piped stdout
+std::string WStr(const std::wstring& w) {
+    if (w.empty()) return {};
+    int sz = WideCharToMultiByte(CP_UTF8, 0, w.data(), (int)w.size(), nullptr, 0, nullptr, nullptr);
+    std::string s(sz, '\0');
+    WideCharToMultiByte(CP_UTF8, 0, w.data(), (int)w.size(), &s[0], sz, nullptr, nullptr);
+    return s;
+}
+
 BOOL WINAPI ConsoleHandler(DWORD signal) {
     if (signal == CTRL_C_EVENT || signal == CTRL_CLOSE_EVENT || 
         signal == CTRL_BREAK_EVENT) {
-        std::wcout << L"\n🛑 Shutdown signal received...\n";
+        std::cout << "\nShutdown signal received...\n" << std::flush;
         g_running = false;
         return TRUE;
     }
@@ -82,20 +88,17 @@ bool InitializeLogger() {
 
 // Print banner
 void PrintBanner() {
-    std::wcout << L"\n";
-    std::wcout << L"NetSentinel v" << VERSION_MAJOR << L"." << VERSION_MINOR << L"." << VERSION_PATCH << L"\n";
-    std::wcout << L"Network Security Monitor & Protection\n";
-    
-    // Check if running as admin earlier for the banner? No, we can just print generic info here.
-    // But let's be optimistic.
-    std::wcout << L"Status: ACTIVE (Protection available if running as Admin)\n";
-    std::wcout << L"\n";
+    std::cout << "\n";
+    std::cout << "NetSentinel v" << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << "\n";
+    std::cout << "Network Security Monitor & Protection\n";
+    std::cout << "Status: ACTIVE (Protection available if running as Admin)\n";
+    std::cout << "\n" << std::flush;
 }
 
 // Print table header
 void PrintHeader() {
-    std::wcout << L"TIME     | PROCESS          | PID    | REMOTE ADDRESS        | PORT  | RISK      | INFO\n";
-    std::wcout << L"─────────┼──────────────────┼────────┼───────────────────────┼───────┼───────────┼──────────────────\n";
+    std::cout << "TIME     | PROCESS          | PID    | REMOTE ADDRESS        | PORT  | RISK      | INFO\n";
+    std::cout << "---------+------------------+--------+-----------------------+-------+-----------+------------------\n" << std::flush;
 }
 
 // Print connection row
@@ -107,45 +110,36 @@ void PrintConnection(const Connection& conn) {
         return;
     }
     
-    std::wcout << std::put_time(&localTime, L"%H:%M:%S") << L" | ";
-    std::wcout << std::left << std::setw(16) << conn.processName.substr(0, 16) << L" | ";
-    std::wcout << std::right << std::setw(6) << conn.pid << L" | ";
-    std::wcout << std::left << std::setw(21) << conn.remoteIp << L" | ";
-    std::wcout << std::right << std::setw(5) << conn.remotePort << L" | ";
-    std::wcout << FormatRisk(conn.riskLevel) << L" | ";
+    std::cout << std::put_time(&localTime, "%H:%M:%S") << " | ";
+    std::cout << std::left << std::setw(16) << WStr(conn.processName).substr(0, 16) << " | ";
+    std::cout << std::right << std::setw(6) << conn.pid << " | ";
+    std::cout << std::left << std::setw(21) << WStr(conn.remoteIp) << " | ";
+    std::cout << std::right << std::setw(5) << conn.remotePort << " | ";
+    std::cout << WStr(FormatRisk(conn.riskLevel)) << " | ";
     
     if (!conn.threatIntel.empty()) {
-        std::wcout << conn.threatIntel.substr(0, 20);
+        std::cout << WStr(conn.threatIntel);
     }
-    std::wcout << L"\n";
+    std::cout << "\n" << std::flush;
 }
 
 int main() {
-    
-    // Configure locale so wide console output renders correctly on Windows.
-    std::setlocale(LC_ALL, ".UTF-8");
-    try {
-        std::locale::global(std::locale(""));
-        std::wcout.imbue(std::locale());
-        std::wcerr.imbue(std::locale());
-    } catch (...) {
-        // Keep running even if locale setup fails.
-    }
-
-    // Set console mode
+    // Force UTF-8 byte stream on stdout/stderr so Node.js pipe can read it
     SetConsoleOutputCP(CP_UTF8);
     SetConsoleCtrlHandler(ConsoleHandler, TRUE);
+    // Disable sync with C stdio for faster pipe flushing
+    std::ios::sync_with_stdio(false);
+    std::cout.setf(std::ios::unitbuf); // auto-flush every write
     
     // Kill switch check
     if (KillSwitch::IsDisabled()) {
-        std::wcout << L"🛑 NetSentinel is DISABLED via kill switch\n";
-        std::wcout << L"   Run: reg delete HKCU\\Software\\CyberGuardian\\NetSentinel /v DisableMonitoring\n";
+        std::cout << "[WARN] NetSentinel is DISABLED via kill switch\n" << std::flush;
         return 0;
     }
     
     // Initialize logging
     if (!InitializeLogger()) {
-        std::wcerr << L"⚠️  Warning: Failed to initialize logger (continuing)\n";
+        std::cout << "[WARN] Failed to initialize logger (continuing)\n" << std::flush;
     }
     
     Logger::Instance().Info(L"NetSentinel starting...");
@@ -165,8 +159,7 @@ int main() {
     }
     
     if (!isAdmin) {
-        std::wcout << L"⚠️  Warning: Running without administrator rights\n";
-        std::wcout << L"    Some processes may show as 'unknown'\n\n";
+        std::cout << "[WARN] Running without administrator rights. Some processes may show as unknown.\n" << std::flush;
         Logger::Instance().Warning(L"Running without admin rights");
     }
     
@@ -179,12 +172,9 @@ int main() {
     PacketCapture& packetCapture = PacketCapture::Instance();
     
     tcpTable.SetEstablishedOnly(false);
-    // Test mode: allow loopback so offline/local tests can prove detection.
-    const wchar_t* testMode = _wgetenv(L"NETSENTINEL_TEST_MODE");
-    const bool isTestMode = (testMode && *testMode);
-
-    tcpTable.SetIncludeLoopback(isTestMode);
-    udpTable.SetIncludeLoopback(isTestMode);
+    // Always monitor loopback traffic (localhost/127.0.0.1) so simulated attacks on the same machine are always shown
+    tcpTable.SetIncludeLoopback(true);
+    udpTable.SetIncludeLoopback(true);
     
     // Initialize threat intelligence
     threatIntel.LoadFeeds();
@@ -193,20 +183,19 @@ int main() {
     // Initialize firewall blocker (requires admin)
     if (isAdmin) {
         if (!firewallBlocker.Initialize()) {
-            std::wcout << L"⚠️  Warning: Failed to initialize firewall blocker\n";
+            std::cout << "[WARN] Failed to initialize firewall blocker\n" << std::flush;
             Logger::Instance().Warning(L"Firewall blocker initialization failed");
         } else {
-            std::wcout << L"✅ Firewall blocker initialized (ACTIVE PROTECTION ENABLED)\n";
+            std::cout << "[OK] Firewall blocker initialized (ACTIVE PROTECTION ENABLED)\n" << std::flush;
         }
     } else {
-        std::wcout << L"⚠️  Warning: Firewall blocking requires administrator rights\n";
-        std::wcout << L"    NetSentinel will operate in MONITOR ONLY mode\n";
+        std::cout << "[WARN] Firewall blocking requires administrator rights. Running in MONITOR ONLY mode.\n" << std::flush;
     }
     
     // Initialize packet capture (optional, requires WinPcap/Npcap)
     if (packetCapture.Initialize()) {
         packetCapture.StartCapture();
-        std::wcout << L"✅ Packet capture initialized\n";
+        std::cout << "[OK] Packet capture initialized\n" << std::flush;
     }
     
     PrintHeader();
@@ -218,11 +207,17 @@ int main() {
     uint64_t mediumRiskCount = 0;
     auto startTime = steady_clock::now();
     
+    // Deduplication: track HIGH-risk connections already alerted this session
+    // Key = processName + localPort + remoteIp + remotePort
+    // Cleared when the connection disappears (not seen in a scan cycle)
+    std::unordered_set<std::string> alertedConnections;
+    std::unordered_set<std::string> currentCycleHighKeys;
+    
     // Main loop
     while (g_running) {
         // Check kill switch dynamically
         if (KillSwitch::IsDisabled()) {
-            std::wcout << L"\n🛑 Kill switch activated - stopping\n";
+            std::cout << "\n[STOP] Kill switch activated - stopping\n" << std::flush;
             Logger::Instance().Info(L"Kill switch activated");
             break;
         }
@@ -282,36 +277,56 @@ int main() {
                 // Note: This requires actual packet capture implementation
                 // For now, this is a placeholder showing the structure
                 
-                // Only display MEDIUM and above in normal mode (reduce noise)
-                if (conn.riskLevel >= RiskLevel::MEDIUM) {
-                    PrintConnection(conn);
-                }
-                
-                // Block HIGH/CRITICAL connections
-                if (conn.riskLevel >= RiskLevel::HIGH && isAdmin) {
-                    std::wostringstream alert;
-                    alert << L"HIGH RISK: " << conn.processName << L" (PID " << conn.pid 
-                          << L") connecting to " << conn.remoteIp << L":" << conn.remotePort;
-                    if (!conn.threatIntel.empty()) {
-                        alert << L" - " << conn.threatIntel;
+                // Only display HIGH/CRITICAL connections in the Electron monitor
+                // MEDIUM/LOW go silently to the log file only
+                if (conn.riskLevel >= RiskLevel::HIGH) {
+                    // Build a stable key for this specific high-risk alert
+                    std::ostringstream keyStream;
+                    keyStream << WStr(conn.processName) << "|" << conn.pid
+                              << "|" << conn.localPort
+                              << "|" << WStr(conn.remoteIp) << ":" << conn.remotePort;
+                    std::string alertKey = keyStream.str();
+                    currentCycleHighKeys.insert(alertKey);
+
+                    if (alertedConnections.find(alertKey) == alertedConnections.end()) {
+                        // NEW alert — show it and mark as seen
+                        alertedConnections.insert(alertKey);
+                        PrintConnection(conn);
+                        
+                        // Try to block: first WFP firewall (admin), then TerminateProcess (same-user)
+                        bool blocked = false;
+                        
+                        if (isAdmin) {
+                            blocked = firewallBlocker.BlockConnection(conn, conn.threatIntel);
+                        }
+                        
+                        if (!blocked && conn.pid > 4) {
+                            // Fallback: terminate the malicious process directly
+                            // Works without admin if the process runs as the same user
+                            HANDLE hProc = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION,
+                                                       FALSE, static_cast<DWORD>(conn.pid));
+                            if (hProc != nullptr) {
+                                if (TerminateProcess(hProc, 1)) {
+                                    blocked = true;
+                                    std::wostringstream pidStream;
+                                    pidStream << conn.pid;
+                                    Logger::Instance().Critical(
+                                        L"Process TERMINATED: " + conn.processName +
+                                        L" (PID " + pidStream.str() + L") - " +
+                                        conn.threatIntel);
+                                }
+                                CloseHandle(hProc);
+                            }
+                        }
+                        
+                        if (blocked) {
+                            std::cout << "[BLOCKED] " << WStr(conn.processName)
+                                      << " (PID " << conn.pid << ")"
+                                      << " -> " << WStr(conn.remoteIp) << ":" << conn.remotePort
+                                      << " | " << WStr(conn.threatIntel) << "\n" << std::flush;
+                        }
                     }
-                    Logger::Instance().Warning(alert.str());
-                    
-                    // Attempt to block connection
-                    if (firewallBlocker.BlockConnection(conn, conn.threatIntel)) {
-                        std::wcout << L"🛑 BLOCKED: " << conn.processName 
-                                  << L" -> " << conn.remoteIp << L":" << conn.remotePort << L"\n";
-                        Logger::Instance().Critical(L"Connection BLOCKED: " + alert.str());
-                    }
-                } else if (conn.riskLevel >= RiskLevel::HIGH) {
-                    // Log but don't block (no admin rights)
-                    std::wostringstream alert;
-                    alert << L"HIGH RISK: " << conn.processName << L" (PID " << conn.pid 
-                          << L") connecting to " << conn.remoteIp << L":" << conn.remotePort;
-                    if (!conn.threatIntel.empty()) {
-                        alert << L" - " << conn.threatIntel;
-                    }
-                    Logger::Instance().Warning(alert.str());
+                    // else: already alerted this session, skip silently
                 }
 
                 if (conn.riskLevel == RiskLevel::CRITICAL) criticalRiskCount++;
@@ -321,20 +336,38 @@ int main() {
                 totalConnections++;
             }
             
-            // Periodic stats every 30 seconds
+            // Remove stale alert keys: connections no longer present are cleared
+            // so if the process restarts on the same port, it alerts again
+            std::unordered_set<std::string> staleKeys;
+            for (const auto& key : alertedConnections) {
+                if (currentCycleHighKeys.find(key) == currentCycleHighKeys.end()) {
+                    staleKeys.insert(key);
+                }
+            }
+            for (const auto& key : staleKeys) {
+                alertedConnections.erase(key);
+            }
+            currentCycleHighKeys.clear();
+            
+
+            // Heartbeat every 30 seconds to show system is alive
             static auto lastStats = steady_clock::now();
             if (duration_cast<seconds>(steady_clock::now() - lastStats).count() >= 30) {
-                std::wostringstream stats;
-                stats << L"Stats: " << totalConnections << L" connections scanned, "
-                      << criticalRiskCount << L" critical, "
-                      << highRiskCount << L" high risk, "
-                      << mediumRiskCount << L" medium risk";
-                Logger::Instance().Info(stats.str());
+                std::ostringstream stats;
+                stats << "[HEARTBEAT] Scanned " << totalConnections
+                      << " connections | HIGH: " << highRiskCount
+                      << " | CRITICAL: " << criticalRiskCount;
+                std::cout << stats.str() << "\n" << std::flush;
+                std::wostringstream wstats;
+                wstats << L"Stats: " << totalConnections << L" scanned, "
+                       << criticalRiskCount << L" critical, "
+                       << highRiskCount << L" high risk";
+                Logger::Instance().Info(wstats.str());
                 lastStats = steady_clock::now();
             }
             
         } catch (const std::exception& e) {
-            std::string narrowWhat(e.what());
+            std::string narrowWhat(e.what()); 
             std::wstring wideWhat(narrowWhat.begin(), narrowWhat.end());
             Logger::Instance().Error(L"Exception in main loop: " + wideWhat);
         }
@@ -346,6 +379,9 @@ int main() {
         if (sleepTime > milliseconds(0)) {
             Sleep(static_cast<DWORD>(sleepTime.count()));
         }
+
+        // Extremely important when piping to a Node.js/Electron child process!
+        std::wcout.flush();
     }
     
     // Cleanup
@@ -361,6 +397,6 @@ int main() {
     Logger::Instance().Shutdown();
     ProcessCache::Instance().Clear();
     
-    std::wcout << L"\n✅ Monitoring stopped cleanly\n";
+    std::cout << "\n[OK] Monitoring stopped cleanly\n" << std::flush;
     return 0;
 }

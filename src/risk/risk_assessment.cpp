@@ -4,8 +4,10 @@
 #include "utils/string_utils.h"
 #include "utils/logger.h"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <cwctype>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -91,35 +93,35 @@ void RiskEngine::Assess(Connection& conn) {
 
     // Layer 1: Port-based threat intelligence
     CheckPortPolicy(conn);
-    if (conn.riskLevel == RiskLevel::HIGH) {
+    if (conn.riskLevel >= RiskLevel::HIGH) {
         TriggerAlert(conn, conn.threatIntel, false);
         return;
     }
 
     // Layer 2: Process integrity and digital signature validation
     CheckProcessIntegrity(conn);
-    if (conn.riskLevel == RiskLevel::HIGH) {
+    if (conn.riskLevel >= RiskLevel::HIGH) {
         TriggerAlert(conn, conn.threatIntel, false);
         return;
     }
 
     // Layer 3: Parent process chain validation
     CheckParentProcessChain(conn);
-    if (conn.riskLevel == RiskLevel::HIGH) {
+    if (conn.riskLevel >= RiskLevel::HIGH) {
         TriggerAlert(conn, conn.threatIntel, false);
         return;
     }
 
     // Layer 4: Behavioral analysis (beaconing, frequency)
     CheckBehavioralPatterns(conn);
-    if (conn.riskLevel == RiskLevel::HIGH) {
+    if (conn.riskLevel >= RiskLevel::HIGH) {
         TriggerAlert(conn, conn.threatIntel, false);
         return;
     }
 
     // Layer 5: Geolocation policy
     CheckGeolocationPolicy(conn);
-    if (conn.riskLevel == RiskLevel::HIGH) {
+    if (conn.riskLevel >= RiskLevel::HIGH) {
         TriggerAlert(conn, conn.threatIntel, false);
         return;
     }
@@ -141,11 +143,19 @@ void RiskEngine::Assess(Connection& conn) {
 //=============================================================================
 
 void RiskEngine::CheckPortPolicy(Connection& conn) {
-    // Check against known malicious ports
+    // Check remote port against known malicious ports
     if (kMaliciousPorts.find(conn.remotePort) != kMaliciousPorts.end()) {
         conn.riskLevel = RiskLevel::HIGH;
         conn.threatIntel = L"CRITICAL: Connection to known C2/malware port " +
                           ToWideString(conn.remotePort);
+        return;
+    }
+
+    // ALSO check local port — catches processes SERVING on malicious ports (C2 backdoors)
+    if (conn.localPort != 0 && kMaliciousPorts.find(conn.localPort) != kMaliciousPorts.end()) {
+        conn.riskLevel = RiskLevel::HIGH;
+        conn.threatIntel = L"CRITICAL: Process listening/serving on known C2/malware port " +
+                          ToWideString(conn.localPort);
         return;
     }
 
@@ -187,20 +197,16 @@ void RiskEngine::CheckProcessIntegrity(Connection& conn) {
 
     // Fail closed when signature check fails.
     if (!verification.isMicrosoftSigned) {
-        conn.riskLevel = RiskLevel::HIGH;
-        conn.threatIntel = L"HIGH: Untrusted/unsigned process | " + verifiedPath;
-        return;
+        conn.riskLevel = RiskLevel::MEDIUM;
+        conn.threatIntel = L"MEDIUM: Untrusted/unsigned process | " + verifiedPath;
+    } else if (!verification.isInSystem32) {
+        // Keep strict location check based on current verification field.
+        conn.riskLevel = RiskLevel::MEDIUM;
+        conn.threatIntel = L"MEDIUM: Signed process outside trusted location | " + verifiedPath;
+    } else {
+        conn.riskLevel = RiskLevel::LOW;
+        conn.threatIntel = L"Verified: Trusted signed process | " + verification.signerName;
     }
-
-    // Keep strict location check based on current verification field.
-    if (!verification.isInSystem32) {
-        conn.riskLevel = RiskLevel::HIGH;
-        conn.threatIntel = L"HIGH: Signed process outside trusted location | " + verifiedPath;
-        return;
-    }
-
-    conn.riskLevel = RiskLevel::LOW;
-    conn.threatIntel = L"Verified: Trusted signed process | " + verification.signerName;
 }
 
 //=============================================================================
@@ -213,12 +219,11 @@ void RiskEngine::CheckParentProcessChain(Connection& conn) {
     // Parent process metadata is not available in current verification API.
     // Keep a conservative check using available integrity context.
     if (verification.isRunningAsSystem && !verification.isInSystem32) {
-        conn.riskLevel = RiskLevel::HIGH;
-        conn.threatIntel = L"HIGH: SYSTEM context process outside trusted location";
-        return;
+        conn.riskLevel = std::max(conn.riskLevel, RiskLevel::MEDIUM);
+        conn.threatIntel += L" | HIGH: SYSTEM context process outside trusted location";
+    } else {
+        conn.threatIntel += L" | Parent-chain telemetry unavailable in this build";
     }
-
-    conn.threatIntel += L" | Parent-chain telemetry unavailable in this build";
 }
 
 //=============================================================================
@@ -351,7 +356,28 @@ void RiskEngine::CheckGeolocationPolicy(Connection& conn) {
 //=============================================================================
 
 void RiskEngine::TriggerAlert(Connection& conn, const std::wstring& reason, bool blockConnection) {
-    // Log to console/file
+    // ── Deduplication: only alert once per unique connection key ──────────────
+    // Key = PID + localPort + remoteIp:remotePort
+    // This prevents the same C2 port from flooding the log every 2 seconds
+    static std::unordered_map<std::string, std::chrono::steady_clock::time_point> seenAlerts;
+    
+    std::ostringstream keyStream;
+    keyStream << conn.pid << "|" << conn.localPort
+              << "|" << Utils::WideToUTF8(conn.remoteIp) << ":" << conn.remotePort;
+    std::string alertKey = keyStream.str();
+    
+    auto now = std::chrono::steady_clock::now();
+    auto it = seenAlerts.find(alertKey);
+    if (it != seenAlerts.end()) {
+        // Already alerted for this connection — skip unless it's been > 5 minutes
+        if (std::chrono::duration_cast<std::chrono::minutes>(now - it->second).count() < 5) {
+            return; // suppress duplicate alert
+        }
+    }
+    seenAlerts[alertKey] = now;
+    // ──────────────────────────────────────────────────────────────────────────
+
+    // Log to console/file (now fires only once per unique connection)
     Logger::Instance().Critical(L"[HIGH RISK ALERT] " + reason);
 
     // Windows Event Log

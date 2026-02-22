@@ -1,0 +1,52 @@
+{
+  "name": "netsentinel-gui",
+  "version": "1.0.0",
+  "description": "NetSentinel — Real-time Network Security Monitor & Threat Blocker",
+  "main": "main.js",
+  "author": "NetSentinel Team",
+  "license": "ISC",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win --x64",
+    "build:dir": "electron-builder --dir"
+  },
+  "keywords": ["security", "network", "monitor", "firewall"],
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.netsentinel.app",
+    "productName": "NetSentinel",
+    "copyright": "Copyright © 2026 NetSentinel Team",
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "icon.ico",
+      "requestedExecutionLevel": "requireAdministrator",
+      "sign": null,
+      "signingHashAlgorithms": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NetSentinel"
+    },
+    "extraResources": [
+      {
+        "from": "../build/NetSentinel.exe",
+        "to": "NetSentinel.exe"
+      }
+    ],
+    "files": [
+      "**/*",
+      "!node_modules/.cache",
+      "!**/*.map"
+    ],
+    "directories": {
+      "output": "../dist"
+    }
+  }
+}

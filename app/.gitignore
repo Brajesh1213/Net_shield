@@ -1,0 +1,75 @@
+# ==============================
+# Node Modules
+# ==============================
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==============================
+# Build Output
+# ==============================
+dist/
+build/
+out/
+release/
+
+# Electron Builder
+*.exe
+*.msi
+*.dmg
+*.AppImage
+*.deb
+*.snap
+*.blockmap
+
+# ==============================
+# Cache
+# ==============================
+.cache/
+electron-builder-cache/
+npm-cache/
+.pnpm-store/
+
+# OS Files
+# ==============================
+.DS_Store
+Thumbs.db
+
+# ==============================
+# Environment Files
+# ==============================
+.env
+.env.local
+.env.*.local
+
+# ==============================
+# IDE / Editor
+# ==============================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==============================
+# Coverage / Testing
+# ==============================
+coverage/
+.nyc_output/
+
+# ==============================
+# Temporary Files
+# ==============================
+*.tmp
+*.temp
+
+# ==============================
+# Windows Signing / Certificates
+# ==============================
+*.pfx
+*.key
+*.pem

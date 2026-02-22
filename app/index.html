@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="NetSentinel — Real-time network security monitor and threat blocker">
+    <title>NetSentinel Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo-container">
+                <div class="logo-circle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <h1 class="app-title">NetSentinel</h1>
+            </div>
+            <div class="header-right">
+                <span id="admin-badge" class="admin-badge monitor-mode">Monitor Mode</span>
+                <div class="status-indicator">
+                    <span id="status-dot" class="dot stopped"></span>
+                    <span id="status-text" class="status-text">Inactive</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="monitor" id="tab-monitor">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+                Monitor
+            </button>
+            <button class="tab-btn" data-tab="dashboard" id="tab-dashboard">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                Dashboard
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- ══ MONITOR TAB ══════════════════════════════════════════════ -->
+            <div id="tab-content-monitor" class="tab-content active">
+                <!-- Controls -->
+                <section class="controls">
+                    <div class="controls-card">
+                        <h2 class="card-title">System Controls</h2>
+                        <p class="card-desc">Manage the background security engine. Closing this window keeps the engine running in the tray.</p>
+                        <div class="button-group">
+                            <button id="start-btn" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                Start Engine
+                            </button>
+                            <button id="stop-btn" class="btn btn-danger" disabled>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
+                                Stop Engine
+                            </button>
+                            <button id="admin-btn" class="btn btn-admin" title="Restart with admin rights for firewall blocking">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                                Run as Admin
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="stats-card">
+                        <div class="stat-item">
+                            <span class="stat-label">System Status</span>
+                            <span class="stat-value" id="stat-status">Down</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Threats Detected</span>
+                            <span class="stat-value threat-value" id="stat-events">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Blocks Recorded</span>
+                            <span class="stat-value block-value" id="stat-blocks">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Protection Mode</span>
+                            <span class="stat-value" id="stat-mode">Monitor</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Logs -->
+                <section class="logs-section">
+                    <div class="logs-header">
+                        <h2 class="card-title">Monitor &amp; Blocking Reports</h2>
+                        <button id="clear-btn" class="btn-ghost">Clear Logs</button>
+                    </div>
+                    <div class="terminal-container">
+                        <pre id="log-output" class="terminal-output"></pre>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ══ DASHBOARD TAB ════════════════════════════════════════════ -->
+            <div id="tab-content-dashboard" class="tab-content">
+                <!-- Summary Cards -->
+                <div class="dash-cards">
+                    <div class="dash-card">
+                        <div class="dash-card-icon" style="background:rgba(99,102,241,0.15);color:#818cf8">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-label">Scans / Session</span>
+                            <span class="dash-card-value" id="dash-scans">0</span>
+                        </div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        </div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-label">Threats Detected</span>
+                            <span class="dash-card-value" id="dash-threats">0</span>
+                        </div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-icon" style="background:rgba(239,68,68,0.15);color:#f87171">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-label">Blocked / Killed</span>
+                            <span class="dash-card-value" id="dash-blocks">0</span>
+                        </div>
+                    </div>
+                    <div class="dash-card">
+                        <div class="dash-card-icon" style="background:rgba(16,185,129,0.15);color:#34d399">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        </div>
+                        <div class="dash-card-info">
+                            <span class="dash-card-label">Protection</span>
+                            <span class="dash-card-value" id="dash-protection">Monitor</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="dash-charts">
+                    <div class="chart-card">
+                        <h3 class="chart-title">Threat Timeline <span class="chart-sub">(last 60 s)</span></h3>
+                        <div class="chart-wrap">
+                            <canvas id="chart-timeline"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <h3 class="chart-title">Risk Breakdown</h3>
+                        <div class="chart-wrap chart-wrap-small">
+                            <canvas id="chart-breakdown"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Threats Table -->
+                <div class="threats-table-card">
+                    <div class="logs-header">
+                        <h3 class="chart-title">Recent Threats</h3>
+                        <button id="clear-threats-btn" class="btn-ghost">Clear</button>
+                    </div>
+                    <div class="threats-table-wrap">
+                        <table class="threats-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Type</th>
+                                    <th>Details</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="threats-tbody">
+                                <tr class="empty-row"><td colspan="4">No threats detected yet — engine is watching...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html>
