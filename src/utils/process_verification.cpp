@@ -19,18 +19,29 @@ bool IsMicrosoftSigned(const std::wstring& filePath, std::wstring& outSigner) {
 }
 
 bool IsInTrustedLocation(const std::wstring& filePath) {
-    static const std::vector<std::wstring> trustedPaths = {
-        L"C:\\Windows\\System32\\",
-        L"C:\\Windows\\SysWOW64\\",
-        L"C:\\Windows\\",
-        L"C:\\Program Files\\",
-        L"C:\\Program Files (x86)\\"
-    };
-
-    for (const auto& path : trustedPaths) {
-        if (filePath.substr(0, path.length()) == path) {
-            return true;
+    // Build trusted paths dynamically — Windows may be on any drive (C:, D:, etc.)
+    static std::vector<std::wstring> trustedPaths;
+    static bool initialized = false;
+    if (!initialized) {
+        wchar_t winDir[MAX_PATH] = {};
+        if (GetWindowsDirectoryW(winDir, MAX_PATH)) {
+            std::wstring win = winDir;
+            trustedPaths.push_back(win + L"\\System32\\");
+            trustedPaths.push_back(win + L"\\SysWOW64\\");
+            trustedPaths.push_back(win + L"\\");
         }
+        wchar_t progFiles[MAX_PATH] = {};
+        if (GetEnvironmentVariableW(L"ProgramFiles", progFiles, MAX_PATH))
+            trustedPaths.push_back(std::wstring(progFiles) + L"\\");
+        wchar_t progFilesX86[MAX_PATH] = {};
+        if (GetEnvironmentVariableW(L"ProgramFiles(x86)", progFilesX86, MAX_PATH))
+            trustedPaths.push_back(std::wstring(progFilesX86) + L"\\");
+        initialized = true;
+    }
+    for (const auto& path : trustedPaths) {
+        if (filePath.size() >= path.size() &&
+            filePath.substr(0, path.size()) == path)
+            return true;
     }
     return false;
 }
@@ -48,7 +59,7 @@ ProcessVerificationResult VerifyProcess(const std::wstring& processName, DWORD p
         result.isMicrosoftSigned = IsMicrosoftSigned(result.fullPath, result.signerName);
     }
 
-    // Optional: elevation checks are Vista+ and unavailable with _WIN32_WINNT=0x0501.
+    // Elevation checks are Vista+ and require _WIN32_WINNT >= 0x0600.
     result.isRunningAsSystem = false;
 
     CloseHandle(hProcess);

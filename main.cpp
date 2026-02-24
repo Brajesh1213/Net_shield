@@ -6,6 +6,8 @@
 #include <csignal>
 #include <chrono>
 #include <unordered_set>
+#include <vector>
+#include <algorithm>
 #include <ctime>
 #include <clocale>
 #include <locale>
@@ -21,6 +23,9 @@
 #include "src/safety/firewall_blocker.h"
 #include "src/utils/logger.h"
 #include "src/core/process_cache.h"
+#include "src/monitor/file_monitor.h"
+#include "src/monitor/process_monitor.h"
+
 
 using namespace NetSentinel;
 using namespace std::chrono;
@@ -180,7 +185,6 @@ int main() {
     threatIntel.LoadFeeds();
     
     // Initialize firewall blocker (requires admin)
-    // Initialize firewall blocker (requires admin)
     if (isAdmin) {
         if (!firewallBlocker.Initialize()) {
             std::cout << "[WARN] Failed to initialize firewall blocker\n" << std::flush;
@@ -200,7 +204,27 @@ int main() {
     
     PrintHeader();
     
+    // ── Start File Monitor (steganography + malware drop detection) ───────────
+    FileMonitor fileMonitor;
+    fileMonitor.Start([](const FileThreat& threat) {
+        std::string msg = "[FILE THREAT] " + WStr(threat.detailMessage);
+        std::cout << "\n" << msg << "\n" << std::flush;
+        Logger::Instance().Critical(L"[FILE THREAT] " + threat.detailMessage);
+    });
+
+    // ── Start Process Monitor (EDR-lite: child exploit + masquerade) ──────────
+    ProcessMonitor procMonitor;
+    procMonitor.Start([](const ProcessThreat& threat) {
+        std::string msg = "[PROCESS THREAT] " + WStr(threat.detailMessage);
+        std::cout << "\n" << msg << "\n" << std::flush;
+        Logger::Instance().Critical(L"[PROCESS THREAT] " + threat.detailMessage);
+    });
+
+    std::cout << "[OK] File system monitor active (watching Downloads, Desktop, Temp, Startup)\n" << std::flush;
+    std::cout << "[OK] Process monitor active (watching for child exploits and masquerading)\n" << std::flush;
+    
     // Stats
+
     uint64_t totalConnections = 0;
     uint64_t criticalRiskCount = 0;
     uint64_t highRiskCount = 0;
@@ -301,21 +325,74 @@ int main() {
                         }
                         
                         if (!blocked && conn.pid > 4) {
-                            // Fallback: terminate the malicious process directly
-                            // Works without admin if the process runs as the same user
-                            HANDLE hProc = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION,
-                                                       FALSE, static_cast<DWORD>(conn.pid));
-                            if (hProc != nullptr) {
-                                if (TerminateProcess(hProc, 1)) {
-                                    blocked = true;
-                                    std::wostringstream pidStream;
-                                    pidStream << conn.pid;
-                                    Logger::Instance().Critical(
-                                        L"Process TERMINATED: " + conn.processName +
-                                        L" (PID " + pidStream.str() + L") - " +
-                                        conn.threatIntel);
+                            // Safety: NEVER terminate trusted developer / IDE processes.
+                            // These may trigger behavioral false positives (many fast
+                            // connections) but killing them breaks the developer's tools.
+                            std::wstring lowerProc = conn.processName;
+                            std::transform(lowerProc.begin(), lowerProc.end(),
+                                           lowerProc.begin(), ::towlower);
+
+                            // Trusted prefixes and exact names
+                            static const std::vector<std::wstring> safeProcessPrefixes = {
+                                L"language_server_", L"msedgewebview", L"microsoftedge",
+                                L"chrome", L"firefox", L"brave", L"opera", L"vivaldi",
+                            };
+                            static const std::unordered_set<std::wstring> safeProcessExact = {
+                                L"code.exe", L"code - insiders.exe", L"electron.exe",
+                                L"node.exe", L"npm.exe", L"yarn.exe", L"pnpm.exe",
+                                L"python.exe", L"python3.exe", L"pip.exe",
+                                L"git.exe", L"svchost.exe", L"system idle",
+                                L"idea64.exe", L"clion64.exe", L"pycharm64.exe",
+                                L"webstorm64.exe", L"rider64.exe", L"goland64.exe",
+                                L"cmake.exe", L"ninja.exe", L"msbuild.exe",
+                                L"cl.exe", L"link.exe",
+                                L"gcc.exe", L"g++.exe", L"mingw32-make.exe",
+                                L"clang.exe", L"clang++.exe",
+                                // Browsers
+                                L"chrome.exe", L"firefox.exe", L"msedge.exe",
+                                L"opera.exe", L"brave.exe", L"vivaldi.exe",
+                                L"iexplore.exe", L"arc.exe",
+                                // High-connection apps
+                                L"discord.exe", L"slack.exe", L"teams.exe",
+                                L"spotify.exe", L"steam.exe", L"steamwebhelper.exe",
+                                L"onedrive.exe", L"dropbox.exe",
+                                L"outlook.exe", L"thunderbird.exe",
+                                L"ollama.exe", L"ollama app.exe",
+                                L"antigravity.exe",
+                            };
+                            bool isSafe = safeProcessExact.count(lowerProc) > 0;
+                            if (!isSafe) {
+                                for (const auto& pfx : safeProcessPrefixes) {
+                                    if (lowerProc.size() >= pfx.size() &&
+                                        lowerProc.compare(0, pfx.size(), pfx) == 0) {
+                                        isSafe = true;
+                                        break;
+                                    }
                                 }
-                                CloseHandle(hProc);
+                            }
+
+                            if (!isSafe) {
+                                // Fallback: terminate the malicious process directly
+                                // Works without admin if the process runs as the same user
+                                HANDLE hProc = OpenProcess(PROCESS_TERMINATE | PROCESS_QUERY_INFORMATION,
+                                                           FALSE, static_cast<DWORD>(conn.pid));
+                                if (hProc != nullptr) {
+                                    if (TerminateProcess(hProc, 1)) {
+                                        blocked = true;
+                                        std::wostringstream pidStream;
+                                        pidStream << conn.pid;
+                                        Logger::Instance().Critical(
+                                            L"Process TERMINATED: " + conn.processName +
+                                            L" (PID " + pidStream.str() + L") - " +
+                                            conn.threatIntel);
+                                    }
+                                    CloseHandle(hProc);
+                                }
+                            } else {
+                                // Log but do NOT kill trusted processes
+                                Logger::Instance().Warning(
+                                    L"[SKIP KILL] Trusted dev process: " + conn.processName +
+                                    L" — behavioral alert suppressed");
                             }
                         }
                         
@@ -391,7 +468,6 @@ int main() {
                 << L"Total connections: " << totalConnections;
     Logger::Instance().Info(shutdownMsg.str());
     
-    // Cleanup
     packetCapture.Shutdown();
     firewallBlocker.Shutdown();
     Logger::Instance().Shutdown();

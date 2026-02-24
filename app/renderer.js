@@ -114,7 +114,31 @@ document.addEventListener('DOMContentLoaded', async () => {
             const lower = line.toLowerCase();
             let css = 'info';
 
-            if (lower.includes('[blocked]') || lower.includes('terminated')) {
+            // ── File/Process threat (highest priority styling) ─────────────
+            if (lower.includes('[file threat]') || lower.includes('[process threat]')) {
+                css = 'error';
+                threatCount++;
+                statEvents.textContent = threatCount;
+                dashThreats.textContent = threatCount;
+                timelineThisSecond++;
+
+                // Also push to dashboard threats table
+                const emptyRow = threatsTbody.querySelector('.empty-row');
+                if (emptyRow) emptyRow.remove();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="threat-time">${new Date().toLocaleTimeString()}</td>
+                    <td>${lower.includes('[file threat]')
+                        ? '<span class="badge badge-file">FILE</span>'
+                        : '<span class="badge badge-proc">PROCESS</span>'}</td>
+                    <td class="threat-msg">${escapeHtml(line.replace(/\[.*?\]\s*/g,'').trim().substring(0,90))}</td>
+                    <td><span class="badge badge-alert">DETECTED</span></td>
+                `;
+                threatsTbody.insertBefore(tr, threatsTbody.firstChild);
+                while (threatsTbody.rows.length > 50) threatsTbody.deleteRow(threatsTbody.rows.length - 1);
+                updateBreakdownChart();
+
+            } else if (lower.includes('[blocked]') || lower.includes('terminated')) {
                 css = 'error';
                 blockCount++;
                 statBlocks.textContent = blockCount;
@@ -135,6 +159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             appendLog(line + '\n', css);
         });
     });
+
 
     // ── Threat events (from main process) ───────────────────────────────────
     window.electronAPI.onThreatDetected((threat) => {

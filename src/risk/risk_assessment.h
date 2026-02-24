@@ -16,6 +16,7 @@ struct ConnectionBehavior {
     std::chrono::steady_clock::time_point lastSeen;
     std::vector<uint16_t> portsUsed;
     bool isBeaconing = false;  // Regular interval connections
+    uint32_t beaconHits = 0;   // Count of confirmed beacon intervals
 };
 
 class RiskEngine {

@@ -3,6 +3,13 @@ project(NetSentinel VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# Force MinGW to enable threading support
+if(MINGW)
+    add_compile_options(-std=c++17)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -lpthread")
+endif()
 
 # Windows specific
 if(WIN32)
@@ -12,6 +19,8 @@ if(WIN32)
     set(SOURCES
         main.cpp
         src/core/process_cache.cpp
+        src/monitor/file_monitor.cpp
+        src/monitor/process_monitor.cpp
         src/network/tcp_table.cpp
         src/network/udp_table.cpp
         src/network/packet_capture.cpp
@@ -43,16 +52,12 @@ if(WIN32)
         user32        # Windows UI
         ole32         # COM (for firewall)
         oleaut32      # COM Automation (for firewall)
-        # winhttp       # HTTP (for threat intel APIs - optional, requires API keys)
     )
     
-    # Static runtime for distribution
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-    
-    # Enable optimizations
+    # Enable optimizations (MinGW/GCC compatible flags)
     target_compile_options(NetSentinel PRIVATE
-        $<$<CONFIG:Release>:/O2 /MT>
-        $<$<CONFIG:Debug>:/Od /Zi /MTd>
+        $<$<CONFIG:Release>:-O2 -Wall>
+        $<$<CONFIG:Debug>:-O0 -g -Wall>
     )
     
     # Manifest for UAC (optional - for future blocking features)

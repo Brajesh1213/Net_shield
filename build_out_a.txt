@@ -1,0 +1,41 @@
+[  6%] Building CXX object CMakeFiles/NetSentinel.dir/src/safety/firewall_blocker.cpp.obj
+[ 13%] Building CXX object CMakeFiles/NetSentinel.dir/src/utils/logger.cpp.obj
+In file included from C:\Users\HP\Desktop\rp\src\utils\logger.cpp:2:
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:10:27: error: 'uint32_t' was not declared in this scope
+   10 | std::wstring IPv4ToString(uint32_t ip);
+      |                           ^~~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:6:1: note: 'uint32_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+    5 | #include <ws2tcpip.h>
+  +++ |+#include <cstdint>
+    6 | 
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:13:33: error: 'uint8_t' does not name a type
+   13 | std::wstring IPv6ToString(const uint8_t* ipBytes);
+      |                                 ^~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:13:33: note: 'uint8_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:16:44: error: 'uint32_t' has not been declared
+   16 | bool StringToIPv4(const std::wstring& str, uint32_t& ip);
+      |                                            ^~~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:16:44: note: 'uint32_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:19:20: error: 'uint32_t' was not declared in this scope
+   19 | bool IsPrivateIPv4(uint32_t ip);
+      |                    ^~~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:19:20: note: 'uint32_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:20:26: error: 'uint8_t' does not name a type
+   20 | bool IsPrivateIPv6(const uint8_t* ipBytes);
+      |                          ^~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:20:26: note: 'uint8_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:23:21: error: 'uint32_t' was not declared in this scope
+   23 | bool IsLoopbackIPv4(uint32_t ip);
+      |                     ^~~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:23:21: note: 'uint32_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:24:27: error: 'uint8_t' does not name a type
+   24 | bool IsLoopbackIPv6(const uint8_t* ipBytes);
+      |                           ^~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:24:27: note: 'uint8_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:27:22: error: 'uint32_t' was not declared in this scope
+   27 | bool IsMulticastIPv4(uint32_t ip);
+      |                      ^~~~~~~~
+C:/Users/HP/Desktop/rp/src/utils/string_utils.h:27:22: note: 'uint32_t' is defined in header '<cstdint>'; this is probably fixable by adding '#include <cstdint>'
+mingw32-make[2]: *** [CMakeFiles\NetSentinel.dir\build.make:244: CMakeFiles/NetSentinel.dir/src/utils/logger.cpp.obj] Error 1
+mingw32-make[1]: *** [CMakeFiles\Makefile2:86: CMakeFiles/NetSentinel.dir/all] Error 2
+mingw32-make: *** [Makefile:90: all] Error 2

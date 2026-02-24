@@ -6,38 +6,8 @@
 #include <iphlpapi.h>
 #include <ws2tcpip.h>
 
-// MinGW compatibility - define structures and use dynamic loading
-#ifndef UDP_TABLE_OWNER_PID
-    typedef enum _UDP_TABLE_CLASS {
-        UDP_TABLE_BASIC = 0,
-        UDP_TABLE_OWNER_PID = 1,
-        UDP_TABLE_OWNER_MODULE = 2
-    } UDP_TABLE_CLASS;
-#endif
-
-// Forward declarations for MinGW
-typedef struct _MIB_UDPROW_OWNER_PID {
-    DWORD dwLocalAddr;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDPROW_OWNER_PID, *PMIB_UDPROW_OWNER_PID;
-
-typedef struct _MIB_UDPTABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDPROW_OWNER_PID table[1];
-} MIB_UDPTABLE_OWNER_PID, *PMIB_UDPTABLE_OWNER_PID;
-
-typedef struct _MIB_UDP6ROW_OWNER_PID {
-    UCHAR ucLocalAddr[16];
-    DWORD dwLocalScopeId;
-    DWORD dwLocalPort;
-    DWORD dwOwningPid;
-} MIB_UDP6ROW_OWNER_PID, *PMIB_UDP6ROW_OWNER_PID;
-
-typedef struct _MIB_UDP6TABLE_OWNER_PID {
-    DWORD dwNumEntries;
-    MIB_UDP6ROW_OWNER_PID table[1];
-} MIB_UDP6TABLE_OWNER_PID, *PMIB_UDP6TABLE_OWNER_PID;
+// Modern MSYS2/MinGW headers (GCC 15+) already define all UDP table
+// structs and enums in iprtrmib.h — no manual definitions needed.
 
 // Dynamic loading for GetExtendedUdpTable
 namespace {

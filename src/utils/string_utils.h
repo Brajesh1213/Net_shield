@@ -2,6 +2,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <cstdint>
 #include <ws2tcpip.h>
 
 namespace NetSentinel::Utils {

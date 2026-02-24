@@ -116,7 +116,6 @@ bool PacketCapture::DetectC2Beacon(const std::vector<uint8_t>& payload) {
     // Check for common C2 patterns
     // Example: Metasploit, Cobalt Strike patterns
     const uint8_t metasploitPattern[] = {0x00, 0x00, 0xBE, 0xEF};
-    const uint8_t cobaltStrikePattern[] = {0x00, 0x00, 0x00, 0x00};
     
     if (payload.size() >= sizeof(metasploitPattern)) {
         if (std::memcmp(payload.data(), metasploitPattern, sizeof(metasploitPattern)) == 0) {

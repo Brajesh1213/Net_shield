@@ -32,9 +32,8 @@ void ThreatIntel::LoadStaticFeeds() {
     // Known malicious IPs from various threat feeds
     // In production, load from files or APIs
     knownBadIPs_ = {
-        L"192.168.1.100",  // Example
-        L"10.0.0.50",      // Example
-        // Add more known bad IPs here
+        // Add real known-bad public IPs here (never use RFC1918 private ranges!)
+        // Example: L"185.220.101.1",  // Known Tor exit node
     };
     
     // Known malicious domains

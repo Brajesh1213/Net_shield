@@ -579,6 +579,18 @@ body {
     color: #a5b4fc;
 }
 
+.badge-file {
+    background: rgba(239, 68, 68, 0.25);
+    color: #ff6b6b;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.badge-proc {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+}
+
 /* ── Stat value colours ────────────────────────────────────────────────────── */
 .threat-value {
     color: #fbbf24;
