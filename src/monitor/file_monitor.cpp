@@ -23,6 +23,9 @@ static const std::vector<std::wstring> kDangerousExts = {
 static const std::vector<std::wstring> kImageExts = {
     L".jpg", L".jpeg", L".png", L".gif", L".webp", L".bmp", L".tiff"
 };
+static const std::vector<std::wstring> kDocExts = {
+    L".pdf", L".docx", L".xlsx", L".pptx", L".rtf", L".csv"
+};
 
 // ── Get folders to watch — MinGW 6.3 compatible ───────────────────────────────
 std::vector<std::wstring> FileMonitor::GetWatchFolders() {
@@ -186,15 +189,34 @@ void FileMonitor::ScanFile(const std::wstring& fullPath, const std::wstring& fol
     }
     std::wstring name = fullPath.substr(fullPath.rfind(L'\\') + 1);
 
-    // 1. Steganography: image extension but PE/wrong content
+    // ── Whitelist: known benign Windows / PowerShell system temp files ────────
+    // These are created by the OS itself and are NOT malware.
+    std::wstring nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::towlower);
+
+    // PowerShell execution policy test scripts  (__PSScriptPolicyTest_*.ps1)
+    if (nameLower.find(L"__psscriptpolicytest_") == 0) return;
+    // Windows Update / WU agent temp scripts
+    if (nameLower.find(L"wuauclt") != std::wstring::npos) return;
+    // Windows Defender temp files
+    if (nameLower.find(L"mpengine") != std::wstring::npos) return;
+    // Common legitimate installer temp files
+    if (nameLower.find(L"~nsu") == 0) return;  // NSIS installer temp
+
+    // 1. Steganography: image/doc extension but PE/wrong content
     bool isImage = std::find(kImageExts.begin(), kImageExts.end(), ext) != kImageExts.end();
-    if (isImage && IsSteganography(fullPath, ext)) {
+    bool isDoc   = std::find(kDocExts.begin(), kDocExts.end(), ext) != kDocExts.end();
+
+    if ((isImage || isDoc) && IsSteganography(fullPath, ext)) {
         FileThreat t;
         t.type          = FileThreatType::STEGANOGRAPHY;
         t.filePath      = fullPath;
         t.folderWatched = folder;
-        t.detailMessage = L"STEGANOGRAPHY ALERT: '" + name +
-                          L"' has an image extension but contains executable code (MZ PE header). "
+
+        std::wstring typeLabel = isImage ? L"IMAGE" : L"DOCUMENT";
+        t.detailMessage = typeLabel + L" STEGANOGRAPHY ALERT: '" + name +
+                          L"' has a " + (isImage ? L"visual" : L"document") + 
+                          L" extension but contains executable code (MZ PE header). "
                           L"Malware is hidden inside! Location: (" + fullPath + L")";
         if (m_callback) m_callback(t);
         return;
@@ -239,16 +261,14 @@ bool FileMonitor::IsSteganography(const std::wstring& filePath, const std::wstri
     CloseHandle(hFile);
     if (read < 4) return false;
 
-    // MZ header (0x4D 0x5A) inside ANY image = Windows PE exe disguised as image
+    // ── ONLY flag when the Windows PE "MZ" magic is at the very first byte ──
+    // Real image files (PNG, JPEG, GIF, BMP) NEVER start with 0x4D 0x5A.
+    // If they do, it is a genuine PE executable masquerading as an image.
+    //
+    // We intentionally do NOT check whether the image magic bytes are absent —
+    // some editors and AI tools write extra metadata before the standard header,
+    // and those are legitimate files, not steganography (= too many false positives).
     if (header[0] == 0x4D && header[1] == 0x5A) return true;
-
-    // Validate the file matches its actual claimed format magic bytes
-    if (ext == L".jpg" || ext == L".jpeg")
-        return !(header[0]==0xFF && header[1]==0xD8 && header[2]==0xFF);
-    if (ext == L".png")
-        return !(header[0]==0x89 && header[1]==0x50 && header[2]==0x4E && header[3]==0x47);
-    if (ext == L".gif")
-        return !(header[0]==0x47 && header[1]==0x49 && header[2]==0x46);
 
     return false;
 }

@@ -336,11 +336,12 @@ int main() {
                             static const std::vector<std::wstring> safeProcessPrefixes = {
                                 L"language_server_", L"msedgewebview", L"microsoftedge",
                                 L"chrome", L"firefox", L"brave", L"opera", L"vivaldi",
+                                L"python", L"pypy", L"conda",
                             };
                             static const std::unordered_set<std::wstring> safeProcessExact = {
                                 L"code.exe", L"code - insiders.exe", L"electron.exe",
                                 L"node.exe", L"npm.exe", L"yarn.exe", L"pnpm.exe",
-                                L"python.exe", L"python3.exe", L"pip.exe",
+                                L"pip.exe",
                                 L"git.exe", L"svchost.exe", L"system idle",
                                 L"idea64.exe", L"clion64.exe", L"pycharm64.exe",
                                 L"webstorm64.exe", L"rider64.exe", L"goland64.exe",

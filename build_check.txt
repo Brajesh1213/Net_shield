@@ -1,4 +1,0 @@
-C:\msys64\mingw64\bin\gcc.exe
-C:\Program Files\CMake\bin\cmake.exe
-INFO: Could not find files for the given pattern(s).
-DONE 
