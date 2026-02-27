@@ -54,6 +54,10 @@ private:
     bool DetectMalwarePatterns(const std::vector<uint8_t>& payload);
     bool DetectBase64Encoding(const std::vector<uint8_t>& payload);
     bool DetectEncryptedTraffic(const std::vector<uint8_t>& payload);
+
+    // YARA Engine
+    void* yaraRules_ = nullptr; // void* to avoid requiring yara.h in header
+    bool LoadYaraRules(const std::string& rulesFile);
 };
 
 } // namespace NetSentinel

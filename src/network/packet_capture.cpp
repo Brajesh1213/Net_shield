@@ -3,6 +3,11 @@
 #include "src/utils/logger.h"
 #include <algorithm>
 #include <cstring>
+#include <iostream>
+
+#ifdef USE_YARA
+#include <yara.h>
+#endif
 
 namespace NetSentinel {
 
@@ -21,6 +26,14 @@ bool PacketCapture::Initialize() {
         return true;
     }
     
+#ifdef USE_YARA
+    if (yr_initialize() != ERROR_SUCCESS) {
+        Logger::Instance().Error(L"PacketCapture: Failed to initialize YARA engine");
+    } else {
+        Logger::Instance().Info(L"PacketCapture: YARA engine initialized successfully");
+    }
+#endif
+
     // Note: Full packet capture requires WinPcap/Npcap library
     // This is a stub implementation showing the structure
     
@@ -153,11 +166,39 @@ bool PacketCapture::DetectDataExfiltration(const std::vector<uint8_t>& payload) 
     return false;
 }
 
+#ifdef USE_YARA
+// Callback function for YARA scanner
+int YaraScanCallback(YR_SCAN_CONTEXT* context, int message, void* message_data, void* user_data) {
+    if (message == CALLBACK_MSG_RULE_MATCHING) {
+        YR_RULE* rule = (YR_RULE*)message_data;
+        bool* matched = (bool*)user_data;
+        *matched = true;
+        // Optionally, we could log `rule->identifier` here.
+    }
+    return CALLBACK_CONTINUE;
+}
+#endif
+
 bool PacketCapture::DetectMalwarePatterns(const std::vector<uint8_t>& payload) {
-    // Check for known malware signatures
+#ifdef USE_YARA
+    // Dynamically scan using the loaded YARA rules
+    if (yaraRules_) {
+        bool matched = false;
+        yr_rules_scan_mem(
+            static_cast<YR_RULES*>(yaraRules_),
+            payload.data(),
+            payload.size(),
+            0,
+            YaraScanCallback,
+            &matched,
+            0
+        );
+        if (matched) return true;
+    }
+#endif
+
+    // Fallback: Check for known malware signatures
     // In production, use YARA rules or signature database
-    
-    // Example: Check for common malware strings
     const char* suspiciousStrings[] = {
         "cmd.exe",
         "/c",
@@ -212,7 +253,56 @@ void PacketCapture::SetPayloadCallback(std::function<void(const Connection&, con
 
 void PacketCapture::Shutdown() {
     StopCapture();
+#ifdef USE_YARA
+    if (yaraRules_) {
+        yr_rules_destroy(static_cast<YR_RULES*>(yaraRules_));
+        yaraRules_ = nullptr;
+    }
+    yr_finalize();
+#endif
     initialized_ = false;
+}
+
+bool PacketCapture::LoadYaraRules(const std::string& rulesFile) {
+#ifdef USE_YARA
+    YR_COMPILER* compiler = nullptr;
+    if (yr_compiler_create(&compiler) != ERROR_SUCCESS) {
+        return false;
+    }
+    
+    FILE* ruleFile = fopen(rulesFile.c_str(), "r");
+    if (!ruleFile) {
+        yr_compiler_destroy(compiler);
+        return false;
+    }
+    
+    int errors = yr_compiler_add_file(compiler, ruleFile, nullptr, rulesFile.c_str());
+    fclose(ruleFile);
+    
+    if (errors > 0) {
+        Logger::Instance().Error(L"PacketCapture: YARA compilation failed with errors");
+        yr_compiler_destroy(compiler);
+        return false;
+    }
+    
+    YR_RULES* rules = nullptr;
+    if (yr_compiler_get_rules(compiler, &rules) != ERROR_SUCCESS) {
+        yr_compiler_destroy(compiler);
+        return false;
+    }
+    
+    if (yaraRules_) {
+        yr_rules_destroy(static_cast<YR_RULES*>(yaraRules_));
+    }
+    
+    yaraRules_ = rules;
+    yr_compiler_destroy(compiler);
+    Logger::Instance().Info(L"PacketCapture: YARA rules loaded successfully");
+    return true;
+#else
+    Logger::Instance().Error(L"PacketCapture: YARA is not enabled in this build.");
+    return false;
+#endif
 }
 
 } // namespace NetSentinel

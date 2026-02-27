@@ -52,7 +52,19 @@ if(WIN32)
         user32        # Windows UI
         ole32         # COM (for firewall)
         oleaut32      # COM Automation (for firewall)
+        wbemuuid      # WMI (for real-time process ETW)
     )
+
+    # YARA Engine configuration
+    option(USE_YARA "Enable YARA engine for packet scanning" OFF)
+    if(USE_YARA)
+        message(STATUS "YARA Engine is ENABLED")
+        add_definitions(-DUSE_YARA)
+        # Ensure yara headers are in include/ and yara library in lib/
+        target_include_directories(NetSentinel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_directories(NetSentinel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+        target_link_libraries(NetSentinel PRIVATE yara)
+    endif()
     
     # Enable optimizations (MinGW/GCC compatible flags)
     target_compile_options(NetSentinel PRIVATE

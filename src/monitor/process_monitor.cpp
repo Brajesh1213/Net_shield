@@ -5,8 +5,15 @@
 #include <psapi.h>
 #include <algorithm>
 #include <sstream>
+#include <vector>
+#include <wbemidl.h>
+
+#ifdef USE_YARA
+#include <yara.h>
+#endif
 
 #pragma comment(lib, "psapi.lib")
+#pragma comment(lib, "wbemuuid.lib")
 
 namespace NetSentinel {
 
@@ -122,11 +129,133 @@ void ProcessMonitor::Stop() {
     }
 }
 
-void ProcessMonitor::MonitorLoop() {
-    while (m_running) {
-        ScanProcesses();
-        Sleep(3000);
+class EventSink : public IWbemObjectSink {
+    LONG m_lRef;
+    ProcessMonitor* monitor;
+public:
+    EventSink(ProcessMonitor* pm) : m_lRef(1), monitor(pm) {}
+    ~EventSink() {}
+
+    virtual ULONG STDMETHODCALLTYPE AddRef() { return InterlockedIncrement(&m_lRef); }
+    virtual ULONG STDMETHODCALLTYPE Release() {
+        LONG lRef = InterlockedDecrement(&m_lRef);
+        if (lRef == 0) delete this;
+        return lRef;
     }
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) {
+        if (riid == IID_IUnknown || riid == IID_IWbemObjectSink) {
+            *ppv = (IWbemObjectSink*) this;
+            AddRef();
+            return WBEM_S_NO_ERROR;
+        }
+        return E_NOINTERFACE;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE Indicate(LONG lObjectCount, IWbemClassObject **apObjArray) {
+        for (long i = 0; i < lObjectCount; i++) {
+            IWbemClassObject* pObj = apObjArray[i];
+            VARIANT varTarget;
+            VariantInit(&varTarget);
+            if (SUCCEEDED(pObj->Get(L"TargetInstance", 0, &varTarget, NULL, NULL)) && varTarget.vt == VT_UNKNOWN) {
+                IWbemClassObject* pProc = NULL;
+                if (SUCCEEDED(varTarget.punkVal->QueryInterface(IID_IWbemClassObject, (void**)&pProc))) {
+                    VARIANT varName, varPid, varParent, varPath;
+                    VariantInit(&varName); VariantInit(&varPid); VariantInit(&varParent); VariantInit(&varPath);
+                    
+                    pProc->Get(L"Name", 0, &varName, NULL, NULL);
+                    pProc->Get(L"ProcessId", 0, &varPid, NULL, NULL);
+                    pProc->Get(L"ParentProcessId", 0, &varParent, NULL, NULL);
+                    pProc->Get(L"ExecutablePath", 0, &varPath, NULL, NULL);
+                    
+                    if (varPid.vt == VT_I4 && varName.vt == VT_BSTR) {
+                        DWORD pid = varPid.lVal;
+                        DWORD parentPid = (varParent.vt == VT_I4) ? varParent.lVal : 0;
+                        std::wstring name = varName.bstrVal;
+                        std::wstring path = (varPath.vt == VT_BSTR && varPath.bstrVal) ? varPath.bstrVal : L"";
+                        
+                        std::wstring lower = name;
+                        std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
+                        
+                        monitor->CheckProcess(pid, parentPid, lower, path);
+                    }
+                    
+                    VariantClear(&varName);
+                    VariantClear(&varPid);
+                    VariantClear(&varParent);
+                    VariantClear(&varPath);
+                    pProc->Release();
+                }
+            }
+            VariantClear(&varTarget);
+        }
+        return WBEM_S_NO_ERROR;
+    }
+
+    virtual HRESULT STDMETHODCALLTYPE SetStatus(LONG lFlags, HRESULT hResult, BSTR strParam, IWbemClassObject *pObjParam) {
+        return WBEM_S_NO_ERROR;
+    }
+};
+
+void ProcessMonitor::MonitorLoop() {
+    HRESULT hres = CoInitializeEx(0, COINIT_MULTITHREADED);
+    if (FAILED(hres)) return;
+
+    hres = CoInitializeSecurity(NULL, -1, NULL, NULL, RPC_C_AUTHN_LEVEL_DEFAULT,
+        RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE, NULL);
+
+    IWbemLocator* pLoc = NULL;
+    hres = CoCreateInstance(CLSID_WbemLocator, 0, CLSCTX_INPROC_SERVER,
+        IID_IWbemLocator, (LPVOID*)&pLoc);
+    if (FAILED(hres)) { CoUninitialize(); return; }
+
+    IWbemServices* pSvc = NULL;
+    BSTR resource = SysAllocString(L"ROOT\\CIMV2");
+    hres = pLoc->ConnectServer(resource, NULL, NULL, 0, 0, 0, 0, &pSvc);
+    SysFreeString(resource);
+    if (FAILED(hres)) { pLoc->Release(); CoUninitialize(); return; }
+
+    hres = CoSetProxyBlanket(pSvc, RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, NULL,
+        RPC_C_AUTHN_LEVEL_CALL, RPC_C_IMP_LEVEL_IMPERSONATE, NULL, EOAC_NONE);
+
+    IUnsecuredApartment* pUnsecApp = NULL;
+    hres = CoCreateInstance(CLSID_UnsecuredApartment, NULL, CLSCTX_LOCAL_SERVER,
+        IID_IUnsecuredApartment, (void**)&pUnsecApp);
+    if (FAILED(hres)) {
+        pSvc->Release();
+        pLoc->Release();
+        CoUninitialize();
+        return;
+    }
+
+    EventSink* pSink = new EventSink(this);
+
+    IUnknown* pStubUnk = NULL; 
+    pUnsecApp->CreateObjectStub(pSink, &pStubUnk);
+
+    IWbemObjectSink* pStubSink = NULL;
+    pStubUnk->QueryInterface(IID_IWbemObjectSink, (void**)&pStubSink);
+
+    BSTR lang = SysAllocString(L"WQL");
+    BSTR query = SysAllocString(L"SELECT * FROM __InstanceCreationEvent WITHIN 1 WHERE TargetInstance ISA 'Win32_Process'");
+    hres = pSvc->ExecNotificationQueryAsync(lang, query, WBEM_FLAG_SEND_STATUS, NULL, pStubSink);
+    SysFreeString(lang);
+    SysFreeString(query);
+
+    // Initial snapshot scan
+    ScanProcesses();
+
+    while (m_running) {
+        Sleep(500); // Wait idly while WMI callbacks fire the event sink in real time
+    }
+
+    pSvc->CancelAsyncCall(pStubSink);
+    pStubSink->Release();
+    pStubUnk->Release();
+    pSink->Release();
+    pUnsecApp->Release();
+    pSvc->Release();
+    pLoc->Release();
+    CoUninitialize();
 }
 
 void ProcessMonitor::ScanProcesses() {
@@ -251,6 +380,23 @@ void ProcessMonitor::CheckProcess(DWORD pid, DWORD parentPid,
             if (m_callback) m_callback(t);
         }
     }
+
+    // ── 5. Scan memory for reflective DLL injection ──────────────────────────
+    if (!m_alertedPids.count(pid)) {
+        if (ScanProcessMemoryForInjection(pid)) {
+            ProcessThreat t;
+            t.type          = ProcessThreatType::MEMORY_INJECTION;
+            t.pid           = pid;
+            t.parentPid     = parentPid;
+            t.processName   = name;
+            t.processPath   = path;
+            t.detailMessage = L"MEMORY INJECTION ATTACK: '" + name +
+                              L"' (PID:" + ToWStr(pid) + L") has unbacked executable memory. " +
+                              L"This strongly indicates reflective DLL injection or process hollowing.";
+            m_alertedPids.insert(pid);
+            if (m_callback) m_callback(t);
+        }
+    }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -282,6 +428,73 @@ std::wstring ProcessMonitor::GetProcessName(DWORD pid) {
     }
     CloseHandle(snap);
     return result;
+}
+
+bool ProcessMonitor::ScanProcessMemoryForInjection(DWORD pid) {
+    HANDLE hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
+    if (!hProcess) return false;
+
+    MEMORY_BASIC_INFORMATION mbi;
+    uint8_t* pAddress = nullptr;
+
+    while (VirtualQueryEx(hProcess, pAddress, &mbi, sizeof(mbi)) == sizeof(mbi)) {
+        // Look for memory pages that are committed, and have RWX or RX permissions
+        if (mbi.State == MEM_COMMIT && 
+            (mbi.Protect == PAGE_EXECUTE_READWRITE || mbi.Protect == PAGE_EXECUTE_READ)) {
+            
+            // Private memory (not MEM_IMAGE) executing code is deeply suspicious
+            if (mbi.Type == MEM_PRIVATE || mbi.Type == MEM_MAPPED) {
+                wchar_t mappedFileName[MAX_PATH] = {};
+                DWORD len = GetMappedFileNameW(hProcess, mbi.BaseAddress, mappedFileName, MAX_PATH);
+                // If there's no physical file backing this executable memory block
+                if (len == 0) {
+                    
+                    // 1. FAST PATH: Check for MZ Header (Classic Reflective DLL / Hollowing)
+                    char buffer[2] = {0};
+                    SIZE_T bytesRead = 0;
+                    if (ReadProcessMemory(hProcess, mbi.BaseAddress, buffer, 2, &bytesRead) && bytesRead == 2) {
+                        if (buffer[0] == 'M' && buffer[1] == 'Z') {
+                            CloseHandle(hProcess);
+                            return true; // Unbacked MZ executable
+                        }
+                    }
+
+                    // 2. DEEP PATH: Malware might wipe the 'MZ' header or just inject raw shellcode
+                    // We only scan small to medium blocks (e.g. up to 10MB) to avoid CPU spikes.
+                    if (mbi.RegionSize > 0 && mbi.RegionSize < (10 * 1024 * 1024)) {
+                        std::vector<uint8_t> memBuffer(mbi.RegionSize);
+                        if (ReadProcessMemory(hProcess, mbi.BaseAddress, memBuffer.data(), mbi.RegionSize, &bytesRead)) {
+                            
+#ifdef USE_YARA
+                            // Assuming yaraRules_ is somehow accessible via PacketCapture::Instance() or a static manager.
+                            // For this file, we can invoke YARA directly if we have access to the rules, 
+                            // OR fallback to heuristic checks. To keep it decoupled right now, we use a basic heuristic 
+                            // for known malicious shellcode patterns (like Meterpreter or Cobalt Strike prologues)
+#endif
+                            // Basic Heuristic: If we find NOP sleds (0x90 0x90 0x90) or common Reverse Shell hex patterns
+                            size_t nopSledSize = 0;
+                            for (size_t i = 0; i < bytesRead; i++) {
+                                if (memBuffer[i] == 0x90) { // NOP instruction
+                                    nopSledSize++;
+                                    if (nopSledSize > 40) { // Found a large NOP sled (classic buffer overflow / shellcode)
+                                        CloseHandle(hProcess);
+                                        return true;
+                                    }
+                                } else {
+                                    nopSledSize = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        pAddress = static_cast<uint8_t*>(mbi.BaseAddress) + mbi.RegionSize;
+    }
+    
+    CloseHandle(hProcess);
+    return false;
 }
 
 bool ProcessMonitor::IsFromSuspiciousPath(const std::wstring& path) {

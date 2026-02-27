@@ -13,6 +13,7 @@ enum class ProcessThreatType {
     SUSPICIOUS_PARENT,   // Browser/WhatsApp spawning cmd/powershell
     SUSPICIOUS_PATH,     // Process running from Downloads/Temp/AppData
     MASQUERADE,          // System process name but wrong path
+    MEMORY_INJECTION,    // Process has RWX unbacked memory pages (Reflective DLL / Hollowed)
 };
 
 struct ProcessThreat {
@@ -35,14 +36,17 @@ public:
     void Start(ProcessThreatCallback callback);
     void Stop();
 
-private:
-    void MonitorLoop();
-    void ScanProcesses();
+    // Now public for EventSink access
     void CheckProcess(DWORD pid, DWORD parentPid,
                       const std::wstring& name, const std::wstring& path);
-
     std::wstring GetProcessPath(DWORD pid);
     std::wstring GetProcessName(DWORD pid);
+    bool         ScanProcessMemoryForInjection(DWORD pid);
+
+private:
+    void MonitorLoop();
+    void ScanProcesses(); // Initial snapshot scan
+
     bool         IsFromSuspiciousPath(const std::wstring& path);
     bool         IsMasquerading(const std::wstring& name, const std::wstring& path);
 
