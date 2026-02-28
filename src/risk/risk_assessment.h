@@ -1,12 +1,12 @@
 // risk_assessment.h
 // Production-hardened Zero Trust risk assessment engine
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include "utils/process_verification.h"
 #include <unordered_map>
 #include <chrono>
 
-namespace NetSentinel {
+namespace Asthak {
 
 // Connection frequency tracking for behavioral analysis
 struct ConnectionBehavior {
@@ -59,4 +59,4 @@ private:
     bool m_desktopNotificationsEnabled = true;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

@@ -6,7 +6,7 @@
 #include <functional>
 #include <atomic>
 
-namespace NetSentinel {
+namespace Asthak {
 
 enum class FileThreatType {
     STEGANOGRAPHY,       // Non-exe file contains PE/script header
@@ -49,4 +49,4 @@ private:
     static DWORD WINAPI WatchThreadProc(LPVOID param);
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

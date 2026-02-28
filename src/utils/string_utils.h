@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <ws2tcpip.h>
 
-namespace NetSentinel::Utils {
+namespace Asthak::Utils {
 
 // IPv4 DWORD to wstring (optimized, thread-safe)
 std::wstring IPv4ToString(uint32_t ip);
@@ -34,4 +34,4 @@ std::wstring UTF8ToWide(const std::string& str);
 // Case-insensitive string compare
 bool CaseInsensitiveEqual(const std::wstring& a, const std::wstring& b);
 
-} // namespace NetSentinel::Utils
+} // namespace Asthak::Utils

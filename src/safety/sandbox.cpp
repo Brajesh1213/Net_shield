@@ -1,11 +1,11 @@
-// sandbox.cpp — Lightweight process sandbox / isolation helpers for NetSentinel
+// sandbox.cpp — Lightweight process sandbox / isolation helpers for Asthak
 // Launches a suspicious process in a restricted Job Object so it cannot
 // spawn children, access the network, or modify system files.
 #include <windows.h>
 #include <string>
 #include <sstream>
 
-namespace NetSentinel {
+namespace Asthak {
 namespace Sandbox {
 
 // ── Sandbox a process by PID: assign it to a restrictive Job Object ──────────
@@ -105,4 +105,4 @@ DWORD LaunchSandboxed(const std::wstring& exePath,
 }
 
 } // namespace Sandbox
-} // namespace NetSentinel
+} // namespace Asthak

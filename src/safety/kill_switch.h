@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-namespace NetSentinel {
+namespace Asthak {
 
 class KillSwitch {
 public:
@@ -12,7 +12,7 @@ public:
 
 private:
     static constexpr wchar_t kRegistryPath[] =
-        L"SOFTWARE\\CyberGuardian\\NetSentinel";
+        L"SOFTWARE\\CyberGuardian\\Asthak";
 
     static constexpr wchar_t kValueName[] =
         L"DisableMonitoring";
@@ -21,4 +21,4 @@ private:
         L"DisableReason";
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

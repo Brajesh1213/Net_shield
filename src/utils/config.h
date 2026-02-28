@@ -1,10 +1,10 @@
-// config.h — Application configuration for NetSentinel
+// config.h — Application configuration for Asthak
 #pragma once
 #include <string>
 #include <cstdint>
 #include <vector>
 
-namespace NetSentinel {
+namespace Asthak {
 
 // All tunable runtime parameters in one place
 struct Config {
@@ -64,4 +64,4 @@ private:
     Config m_cfg;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

@@ -29,7 +29,7 @@ HANDLE WINAPI Hooked_CreateRemoteThread(
     LPVOID lpParameter, DWORD dwCreationFlags, LPDWORD lpThreadId)
 {
     // Alert the system!
-    OutputDebugStringW(L"[NetSentinel-EDR] EXPLOIT MITIGATED: Blocked malicious attempt to inject code into another process!");
+    OutputDebugStringW(L"[Asthak-EDR] EXPLOIT MITIGATED: Blocked malicious attempt to inject code into another process!");
     
     // We deny the operation. Malware fails to inject.
     SetLastError(ERROR_ACCESS_DENIED);
@@ -45,7 +45,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         
         if (target) {
             PatchFunction(target, (void*)Hooked_CreateRemoteThread);
-            OutputDebugStringW(L"[NetSentinel-EDR] Protective DLL successfully injected. API Hooks active.");
+            OutputDebugStringW(L"[Asthak-EDR] Protective DLL successfully injected. API Hooks active.");
         }
     }
     return TRUE;

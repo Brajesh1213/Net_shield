@@ -6,7 +6,7 @@
 #include <sstream>
 #include <algorithm>
 
-namespace NetSentinel {
+namespace Asthak {
 
 AppConfig& AppConfig::Instance() {
     static AppConfig instance;
@@ -73,7 +73,7 @@ bool AppConfig::SaveToFile(const std::wstring& path) const {
 
     auto boolStr = [](bool b) -> const wchar_t* { return b ? L"true" : L"false"; };
 
-    file << L"# NetSentinel Configuration\n";
+    file << L"# Asthak Configuration\n";
     file << L"pollingIntervalMs="    << m_cfg.pollingIntervalMs    << L"\n";
     file << L"heartbeatIntervalSec=" << m_cfg.heartbeatIntervalSec << L"\n";
     file << L"beaconWindowSec="      << m_cfg.beaconWindowSec      << L"\n";
@@ -94,4 +94,4 @@ bool AppConfig::SaveToFile(const std::wstring& path) const {
     return true;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

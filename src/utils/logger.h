@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-namespace NetSentinel {
+namespace Asthak {
 
 enum class LogLevel {
     DEBUG = 0,

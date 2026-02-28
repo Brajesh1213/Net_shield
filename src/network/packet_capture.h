@@ -1,11 +1,11 @@
 // packet_capture.h
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <vector>
 #include <string>
 #include <functional>
 
-namespace NetSentinel {
+namespace Asthak {
 
 // Payload inspection result
 struct PayloadInspection {
@@ -62,4 +62,4 @@ public:
     bool LoadYaraRules(const std::string& rulesFile);
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

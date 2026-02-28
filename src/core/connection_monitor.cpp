@@ -4,7 +4,7 @@
 #include "../network/udp_table.h"
 #include <algorithm>
 
-namespace NetSentinel {
+namespace Asthak {
 
 ConnectionMonitor& ConnectionMonitor::Instance() {
     static ConnectionMonitor instance;
@@ -56,4 +56,4 @@ DWORD WINAPI ConnectionMonitor::MonitorThreadProc(LPVOID param) {
     return 0;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

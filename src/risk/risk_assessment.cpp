@@ -13,7 +13,7 @@
 #include <vector>
 #include <sstream>
 
-namespace NetSentinel {
+namespace Asthak {
 
 namespace {
 template <typename T>
@@ -585,7 +585,7 @@ void RiskEngine::TriggerAlert(Connection& conn, const std::wstring& reason, bool
 
     // Desktop notification
     if (m_desktopNotificationsEnabled) {
-        ShowDesktopNotification(L"NetSentinel Security Alert", reason);
+        ShowDesktopNotification(L"Asthak Security Alert", reason);
     }
 
     // Custom callback
@@ -603,7 +603,7 @@ void RiskEngine::TriggerAlert(Connection& conn, const std::wstring& reason, bool
 
 void RiskEngine::LogToWindowsEventLog(const Connection& conn, const std::wstring& message) {
     // Register event source (do this once at startup in production)
-    HANDLE hEventLog = RegisterEventSourceW(nullptr, L"NetSentinel");
+    HANDLE hEventLog = RegisterEventSourceW(nullptr, L"Asthak");
     if (!hEventLog) {
         return;
     }
@@ -686,4 +686,4 @@ void RiskEngine::EnableDesktopNotifications(bool enable) {
     m_desktopNotificationsEnabled = enable;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

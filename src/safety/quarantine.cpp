@@ -5,7 +5,7 @@
 #include <iomanip>
 #include <algorithm>
 
-namespace NetSentinel {
+namespace Asthak {
 
 Quarantine& Quarantine::Instance() {
     static Quarantine instance;
@@ -180,4 +180,4 @@ bool Quarantine::ReadMetadata(const std::wstring& metaFile, QuarantineEntry& out
     return !out.originalPath.empty();
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

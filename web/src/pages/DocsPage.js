@@ -166,10 +166,10 @@ const DocsPage = () => {
                         <BookOpen className="h-4 w-4" /> Documentation v1.0.0
                     </div>
                     <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
-                        Net<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Sentinel</span> Docs
+                        As<span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">thak</span> Docs
                     </h1>
                     <p className="text-lg text-slate-400 max-w-2xl mx-auto">
-                        Everything you need to understand, deploy, and operate NetSentinel — your Zero Trust endpoint security platform.
+                        Everything you need to understand, deploy, and operate Asthak — your Zero Trust endpoint security platform.
                     </p>
                 </div>
 
@@ -208,10 +208,10 @@ const DocsPage = () => {
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    <strong className="text-white">NetSentinel</strong> is a next-generation Endpoint Detection & Response (EDR) platform built from the ground up for Windows. It combines a native C++17 monitoring engine with an Electron desktop application and a cloud-connected SaaS backend to deliver real-time threat detection, behavioral analysis, and active mitigation.
+                                    <strong className="text-white">Asthak</strong> is a next-generation Endpoint Detection & Response (EDR) platform built from the ground up for Windows. It combines a native C++17 monitoring engine with an Electron desktop application and a cloud-connected SaaS backend to deliver real-time threat detection, behavioral analysis, and active mitigation.
                                 </p>
                                 <p className="text-slate-300 leading-relaxed mb-6">
-                                    Unlike traditional antivirus software that relies on signature matching alone, NetSentinel operates on a <strong className="text-indigo-300">Zero Trust</strong> security model — every connection, process, and file is treated as potentially hostile until proven safe through a multi-layered verification pipeline.
+                                    Unlike traditional antivirus software that relies on signature matching alone, Asthak operates on a <strong className="text-indigo-300">Zero Trust</strong> security model — every connection, process, and file is treated as potentially hostile until proven safe through a multi-layered verification pipeline.
                                 </p>
                                 <h3 className="text-lg font-semibold text-white mb-3">Key Capabilities</h3>
                                 <div className="grid sm:grid-cols-2 gap-3">
@@ -244,7 +244,7 @@ const DocsPage = () => {
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-6">
-                                    NetSentinel is a <strong className="text-white">4-layer system</strong> where each layer handles a distinct responsibility:
+                                    Asthak is a <strong className="text-white">4-layer system</strong> where each layer handles a distinct responsibility:
                                 </p>
                                 <div className="space-y-4 mb-6">
                                     {[
@@ -266,7 +266,7 @@ const DocsPage = () => {
                                 <h3 className="text-lg font-semibold text-white mb-3">Communication Flow</h3>
                                 <Code title="data-flow.txt">{`┌─────────────────┐    stdout/pipe     ┌─────────────────┐
 │  C++ Engine     │ ─────────────────▶ │  Electron App   │
-│  (NetSentinel.  │                    │  (main.js)      │
+│  (Asthak.  │                    │  (main.js)      │
 │   exe)          │                    │                 │
 └─────────────────┘                    └────────┬────────┘
                                                 │ HTTP REST
@@ -278,7 +278,7 @@ const DocsPage = () => {
                                                 │ SQLite
                                                 ▼
                                        ┌─────────────────┐
-                                       │  netsentinel.db │
+                                       │  asthak.db │
                                        └─────────────────┘`}
                                 </Code>
                             </div>
@@ -305,11 +305,11 @@ const DocsPage = () => {
 
                                 <h3 className="text-lg font-semibold text-white mb-3 mt-6">Option 1: Download Pre-Built Installer</h3>
                                 <ol className="list-decimal list-inside space-y-2 text-slate-300 mb-6">
-                                    <li>Download the latest <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">NetSentinel_Beta_v1.0.0.zip</code> from the home page</li>
+                                    <li>Download the latest <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">Asthak_Beta_v1.0.0.zip</code> from the home page</li>
                                     <li>Extract the ZIP file</li>
-                                    <li>Run <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">NetSentinel Setup.exe</code></li>
+                                    <li>Run <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">Asthak Setup.exe</code></li>
                                     <li>Follow the NSIS installer wizard</li>
-                                    <li>Launch NetSentinel from your Desktop shortcut</li>
+                                    <li>Launch Asthak from your Desktop shortcut</li>
                                 </ol>
 
                                 <h3 className="text-lg font-semibold text-white mb-3">Option 2: Build from Source</h3>
@@ -351,7 +351,7 @@ npm start                     # opens on http://localhost:3000`}
                             <div className="glass-card">
                                 <div className="space-y-6">
                                     {[
-                                        { step: 1, title: 'Create an Account', desc: 'Register at the NetSentinel website or directly in the app. All new accounts receive 90 days of free Beta access.' },
+                                        { step: 1, title: 'Create an Account', desc: 'Register at the Asthak website or directly in the app. All new accounts receive 90 days of free Beta access.' },
                                         { step: 2, title: 'Login in the Desktop App', desc: 'The Electron app presents a login screen on first run. Enter your credentials — this generates a session token and binds your hardware ID (HWID) to a single device.' },
                                         { step: 3, title: 'Engine Auto-Starts', desc: 'After successful login, the C++ monitoring engine launches automatically. You\'ll see the live console output in the "Console" tab.' },
                                         { step: 4, title: 'Choose Your Protection Level', desc: 'Running without admin = Monitor Mode (detect-only). Click "Run as Admin" for Full Protection (firewall blocking + process termination).' },
@@ -381,7 +381,7 @@ npm start                     # opens on http://localhost:3000`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-6">
-                                    The core of NetSentinel is a <strong className="text-white">5-layer risk assessment pipeline</strong> that follows the Zero Trust principle: <em className="text-indigo-300">"guilty until proven innocent."</em> Every network connection starts at MEDIUM risk and is evaluated through each layer sequentially. If any layer elevates risk to HIGH or CRITICAL, an alert fires immediately and processing stops.
+                                    The core of Asthak is a <strong className="text-white">5-layer risk assessment pipeline</strong> that follows the Zero Trust principle: <em className="text-indigo-300">"guilty until proven innocent."</em> Every network connection starts at MEDIUM risk and is evaluated through each layer sequentially. If any layer elevates risk to HIGH or CRITICAL, an alert fires immediately and processing stops.
                                 </p>
 
                                 <div className="space-y-3 mb-6">
@@ -434,7 +434,7 @@ System:     svchost.exe, system, system idle process`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    NetSentinel polls the Windows IP Helper API every <strong className="text-white">2 seconds</strong> to enumerate all active TCP and UDP connections — both IPv4 and IPv6. Each connection is enriched with process info from the <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">ProcessCache</code> and deduplicated before risk assessment.
+                                    Asthak polls the Windows IP Helper API every <strong className="text-white">2 seconds</strong> to enumerate all active TCP and UDP connections — both IPv4 and IPv6. Each connection is enriched with process info from the <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">ProcessCache</code> and deduplicated before risk assessment.
                                 </p>
                                 <DocTable
                                     headers={['Feature', 'Details']}
@@ -492,7 +492,7 @@ System:     svchost.exe, system, system idle process`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    The process monitor is NetSentinel's EDR-lite engine. It uses <strong className="text-white">WMI event subscriptions</strong> (<code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">__InstanceCreationEvent</code>) for real-time process creation notifications — no polling needed.
+                                    The process monitor is Asthak's EDR-lite engine. It uses <strong className="text-white">WMI event subscriptions</strong> (<code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">__InstanceCreationEvent</code>) for real-time process creation notifications — no polling needed.
                                 </p>
 
                                 <h3 className="text-lg font-semibold text-white mb-3">Detection Capabilities</h3>
@@ -520,13 +520,13 @@ System:     svchost.exe, system, system idle process`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    NetSentinel proactively injects a protective DLL (<code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">NetSentinel_Hook.dll</code>) into new processes. This DLL hooks critical Windows APIs to block malicious behavior from within the target process itself.
+                                    Asthak proactively injects a protective DLL (<code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">Asthak_Hook.dll</code>) into new processes. This DLL hooks critical Windows APIs to block malicious behavior from within the target process itself.
                                 </p>
 
                                 <h3 className="text-lg font-semibold text-white mb-3">How It Works</h3>
                                 <ol className="list-decimal list-inside space-y-2 text-slate-300 mb-4 text-sm">
                                     <li>A new process is detected via WMI event</li>
-                                    <li>NetSentinel opens the target process with sufficient access rights</li>
+                                    <li>Asthak opens the target process with sufficient access rights</li>
                                     <li>Allocates memory in the target via <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">VirtualAllocEx</code></li>
                                     <li>Writes the DLL path into the allocated memory</li>
                                     <li>Creates a remote thread calling <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">LoadLibraryW</code> to load the hook DLL</li>
@@ -546,13 +546,13 @@ System:     svchost.exe, system, system idle process`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    When a HIGH or CRITICAL risk connection is detected, NetSentinel can automatically create Windows Firewall rules to block the malicious traffic. It uses <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">netsh advfirewall</code> commands executed via <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">CreateProcessW</code> (hidden window).
+                                    When a HIGH or CRITICAL risk connection is detected, Asthak can automatically create Windows Firewall rules to block the malicious traffic. It uses <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">netsh advfirewall</code> commands executed via <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">CreateProcessW</code> (hidden window).
                                 </p>
                                 <DocTable
                                     headers={['Block Type', 'Command Pattern']}
                                     rows={[
-                                        ['Block by IP:Port', 'netsh advfirewall firewall add rule name="NetSentinel_Block_IP_PORT" dir=out action=block remoteip=IP protocol=TCP remoteport=PORT'],
-                                        ['Block by Process', 'netsh advfirewall firewall add rule name="NetSentinel_Block_Process_NAME" dir=out action=block program="PATH"'],
+                                        ['Block by IP:Port', 'netsh advfirewall firewall add rule name="Asthak_Block_IP_PORT" dir=out action=block remoteip=IP protocol=TCP remoteport=PORT'],
+                                        ['Block by Process', 'netsh advfirewall firewall add rule name="Asthak_Block_Process_NAME" dir=out action=block program="PATH"'],
                                         ['Fallback: Kill Process', 'TerminateProcess() for same-user processes when firewall is unavailable'],
                                     ]}
                                 />
@@ -569,7 +569,7 @@ System:     svchost.exe, system, system idle process`}
                             </h2>
                             <div className="glass-card">
                                 <p className="text-slate-300 leading-relaxed mb-4">
-                                    NetSentinel includes an optional YARA integration for deep content scanning of both network payloads and process memory regions. Enable it at build time with <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">-DUSE_YARA=ON</code>.
+                                    Asthak includes an optional YARA integration for deep content scanning of both network payloads and process memory regions. Enable it at build time with <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">-DUSE_YARA=ON</code>.
                                 </p>
                                 <h3 className="text-lg font-semibold text-white mb-3">Included Rule Categories</h3>
                                 <DocTable
@@ -760,14 +760,14 @@ curl http://localhost:5000/api/agent/intelligence \\
                             </h2>
                             <div className="space-y-3">
                                 {[
-                                    { q: 'Does NetSentinel replace my antivirus?', a: 'No. NetSentinel is an EDR (Endpoint Detection & Response) tool that complements your existing antivirus. It focuses on behavioral analysis, network monitoring, and zero-day detection — areas where traditional AV is weakest.' },
+                                    { q: 'Does Asthak replace my antivirus?', a: 'No. Asthak is an EDR (Endpoint Detection & Response) tool that complements your existing antivirus. It focuses on behavioral analysis, network monitoring, and zero-day detection — areas where traditional AV is weakest.' },
                                     { q: 'Will it slow down my computer?', a: 'The C++ engine uses ~15-30 MB of RAM and polls every 2 seconds. WMI event subscriptions are kernel-level callbacks with near-zero overhead. CPU usage is typically <1%.' },
                                     { q: 'Why do I need admin rights?', a: 'Admin rights are optional but recommended. Without admin: Monitor Mode (detect + alert). With admin: Full Protection (firewall blocking, process termination, DLL injection defense).' },
                                     { q: 'Can I use it on multiple computers?', a: 'Each account supports one active device. Logging in on a new device automatically logs out the previous one. Enterprise multi-device licensing is coming soon.' },
                                     { q: 'What data is sent to the cloud?', a: 'Only authentication tokens and anonymous threat alerts (IP, process name, risk level). No personal files, browsing history, or keystrokes are ever transmitted.' },
                                     { q: 'Does it work offline?', a: 'Yes. The C++ monitoring engine works fully offline. Cloud features (GeoIP lookup, threat intel updates, subscription validation) require internet but gracefully degrade when unavailable.' },
-                                    { q: 'How do I unblock a false positive?', a: 'If NetSentinel blocked a legitimate connection, open Windows Firewall settings and delete the rule prefixed with "NetSentinel_Block_". Future versions will include a one-click unblock in the GUI.' },
-                                    { q: 'Is the source code available?', a: 'NetSentinel is currently closed-source during the Beta period. An open-source community edition is under consideration for post-launch.' },
+                                    { q: 'How do I unblock a false positive?', a: 'If Asthak blocked a legitimate connection, open Windows Firewall settings and delete the rule prefixed with "Asthak_Block_". Future versions will include a one-click unblock in the GUI.' },
+                                    { q: 'Is the source code available?', a: 'Asthak is currently closed-source during the Beta period. An open-source community edition is under consideration for post-launch.' },
                                 ].map(({ q, a }, i) => (
                                     <details key={i} className="glass-card group cursor-pointer">
                                         <summary className="flex items-center justify-between text-white font-medium list-none">

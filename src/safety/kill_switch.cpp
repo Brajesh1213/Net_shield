@@ -2,7 +2,7 @@
 #include <windows.h>
 #include <aclapi.h>
 
-namespace NetSentinel {
+namespace Asthak {
 
 constexpr wchar_t KillSwitch::kRegistryPath[];
 constexpr wchar_t KillSwitch::kValueName[];
@@ -140,4 +140,4 @@ std::wstring KillSwitch::GetDisableReason() {
     return buf;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

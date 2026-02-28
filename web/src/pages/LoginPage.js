@@ -37,7 +37,7 @@ const LoginPage = () => {
                         <Shield className="h-8 w-8 text-white" />
                     </div>
                     <h1 className="text-3xl font-extrabold text-white">Welcome back</h1>
-                    <p className="text-slate-400 mt-2">Sign in to your NetSentinel account</p>
+                    <p className="text-slate-400 mt-2">Sign in to your Asthak account</p>
                 </div>
 
                 {/* Card */}

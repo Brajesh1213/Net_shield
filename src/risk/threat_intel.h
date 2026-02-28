@@ -1,11 +1,11 @@
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <string>
 #include <unordered_set>
 #include <unordered_map>
 #include <chrono>
 
-namespace NetSentinel {
+namespace Asthak {
 
 struct ThreatCacheEntry {
     std::wstring result;
@@ -45,4 +45,4 @@ private:
     std::wstring virusTotalKey_;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const engineRes = await window.electronAPI.startBackend();
         if (engineRes.success) {
             updateUI(true);
-            appendLog('--- NetSentinel Engine Initialized ---\n', 'success');
+            appendLog('--- Asthak Engine Initialized ---\n', 'success');
         } else {
             appendLog(`[ERROR] Failed to start engine: ${engineRes.message}\n`, 'error');
         }
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (sub.message) { subMsg.textContent = sub.message; subBanner.style.display = 'flex'; }
         appendLog('[AUTH] ✅ Session restored. Starting engine...\n', 'success');
         const engineRes = await window.electronAPI.startBackend();
-        if (engineRes.success) { updateUI(true); appendLog('--- NetSentinel Engine Initialized ---\n', 'success'); }
+        if (engineRes.success) { updateUI(true); appendLog('--- Asthak Engine Initialized ---\n', 'success'); }
     }
     // else: login overlay stays visible
 

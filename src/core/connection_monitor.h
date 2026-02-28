@@ -1,13 +1,13 @@
 // connection_monitor.h
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <string>
 #include <vector>
 #include <functional>
 #include <atomic>
 #include <windows.h>
 
-namespace NetSentinel {
+namespace Asthak {
 
 using ConnectionCallback = std::function<void(const Connection&)>;
 
@@ -39,4 +39,4 @@ private:
     static DWORD WINAPI MonitorThreadProc(LPVOID param);
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

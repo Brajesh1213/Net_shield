@@ -26,7 +26,7 @@ const LandingPage = () => {
             Protect your fleet with military-grade behavioral analysis, intelligent firewall manipulation, and real-time process monitoring. Prevent zero-days before they execute.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/NetSentinel_Beta_v1.0.0.zip" download className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg hover:from-indigo-400 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/40 hover:shadow-indigo-500/60 flex items-center justify-center gap-2">
+            <a href="/Asthak_Beta_v1.0.0.zip" download className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg hover:from-indigo-400 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/40 hover:shadow-indigo-500/60 flex items-center justify-center gap-2">
               Download Beta (Windows) <ChevronRight className="h-5 w-5" />
             </a>
             <Link to="/docs" className="px-8 py-4 rounded-full glass text-slate-200 font-bold text-lg hover:bg-slate-800/80 transition-all border border-slate-700 flex items-center justify-center gap-2">
@@ -71,10 +71,10 @@ const LandingPage = () => {
             <div className="w-3 h-3 rounded-full bg-red-500/80"></div>
             <div className="w-3 h-3 rounded-full bg-yellow-500/80"></div>
             <div className="w-3 h-3 rounded-full bg-green-500/80"></div>
-            <span className="ml-2 text-xs font-mono text-slate-500">NetSentinel_Log.exe</span>
+            <span className="ml-2 text-xs font-mono text-slate-500">Asthak_Log.exe</span>
           </div>
           <div className="p-6 font-mono text-sm space-y-2 text-slate-300">
-            <p className="text-indigo-400">[INFO] NetSentinel EDR Engine v1.0.0 initializing...</p>
+            <p className="text-indigo-400">[INFO] Asthak EDR Engine v1.0.0 initializing...</p>
             <p><span className="text-green-400">[OK]</span> Connecting to Cloud API for latest threat JSON...</p>
             <p><span className="text-green-400">[OK]</span> Hardware ID Authenticated. Active Subscription verified.</p>
             <p><span className="text-green-400">[OK]</span> WMI Process Monitor Started (EventSink Hooked).</p>

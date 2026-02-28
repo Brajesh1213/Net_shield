@@ -1,9 +1,9 @@
 // firewall_blocker.h
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <string>
 
-namespace NetSentinel {
+namespace Asthak {
 
 class FirewallBlocker {
 public:
@@ -47,4 +47,4 @@ private:
     std::wstring GenerateProcessRuleName(const std::wstring& processPath);
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

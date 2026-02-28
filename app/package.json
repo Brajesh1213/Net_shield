@@ -1,9 +1,9 @@
 {
-  "name": "netsentinel-gui",
+  "name": "asthak-gui",
   "version": "1.0.0",
-  "description": "NetSentinel — Real-time Network Security Monitor & Threat Blocker",
+  "description": "Asthak — Real-time Network Security Monitor & Threat Blocker",
   "main": "main.js",
-  "author": "NetSentinel Team",
+  "author": "Asthak Team",
   "license": "ISC",
   "scripts": {
     "start": "electron .",
@@ -17,9 +17,9 @@
     "electron-builder": "^24.9.1"
   },
   "build": {
-    "appId": "com.netsentinel.app",
-    "productName": "NetSentinel",
-    "copyright": "Copyright © 2026 NetSentinel Team",
+    "appId": "com.asthak.app",
+    "productName": "Asthak",
+    "copyright": "Copyright © 2026 Asthak Team",
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],
       "icon": "icon.ico",
@@ -32,12 +32,12 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "NetSentinel"
+      "shortcutName": "Asthak"
     },
     "extraResources": [
       {
-        "from": "../build/NetSentinel.exe",
-        "to": "NetSentinel.exe"
+        "from": "../build/Asthak.exe",
+        "to": "Asthak.exe"
       }
     ],
     "files": [

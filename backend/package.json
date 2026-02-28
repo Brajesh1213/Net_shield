@@ -1,7 +1,7 @@
 {
-  "name": "netsentinel-backend",
+  "name": "asthak-backend",
   "version": "1.0.0",
-  "description": "NetSentinel EDR custom Node.js backend API",
+  "description": "Asthak EDR custom Node.js backend API",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

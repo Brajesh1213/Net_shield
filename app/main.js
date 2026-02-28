@@ -77,7 +77,7 @@ const checkSubscription = async () => {
             if (mainWindow) mainWindow.webContents.send('subscription-alert', { type: 'expired', message: msg });
             if (Notification.isSupported()) {
                 new Notification({
-                    title: '⚠️ NetSentinel — Action Required',
+                    title: '⚠️ Asthak — Action Required',
                     body: msg,
                 }).show();
             }
@@ -196,7 +196,7 @@ function createTray() {
         { type: 'separator' },
         { label: 'Quit', click: () => { isQuitting = true; if (backendProcess) backendProcess.kill(); app.quit(); } }
     ]);
-    tray.setToolTip('NetSentinel — Network Security Monitor');
+    tray.setToolTip('Asthak — Network Security Monitor');
     tray.setContextMenu(contextMenu);
     tray.on('click', () => mainWindow.isVisible() ? mainWindow.hide() : mainWindow.show());
 }
@@ -317,11 +317,11 @@ ipcMain.handle('lookup-geoip', async (_, ip) => {
 ipcMain.handle('start-backend', async () => {
     if (backendProcess) return { success: false, message: 'Backend is already running.' };
 
-    // In packaged app: electron-builder copies NetSentinel.exe to process.resourcesPath
-    // In dev mode:     it lives at ../build/NetSentinel.exe relative to app/
+    // In packaged app: electron-builder copies Asthak.exe to process.resourcesPath
+    // In dev mode:     it lives at ../build/Asthak.exe relative to app/
     const exePath = app.isPackaged
-        ? path.join(process.resourcesPath, 'NetSentinel.exe')
-        : path.join(__dirname, '..', 'build', 'NetSentinel.exe');
+        ? path.join(process.resourcesPath, 'Asthak.exe')
+        : path.join(__dirname, '..', 'build', 'Asthak.exe');
     try {
         backendProcess = spawn(exePath, [], {
             stdio: ['ignore', 'pipe', 'pipe'],
@@ -346,7 +346,7 @@ ipcMain.handle('start-backend', async () => {
                 const upper = line.toUpperCase();
                 if (upper.includes('HIGH RISK ALERT') || upper.includes('[BLOCKED]')) {
                     const shortMsg = line.replace(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \[CRIT\] /g, '').trim();
-                    showThreatNotification('🚨 NetSentinel Threat Detected', shortMsg.substring(0, 180));
+                    showThreatNotification('🚨 Asthak Threat Detected', shortMsg.substring(0, 180));
                     mainWindow.webContents.send('threat-detected', {
                         time: new Date().toISOString(),
                         message: shortMsg,

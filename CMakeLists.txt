@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(NetSentinel VERSION 0.3.0 LANGUAGES CXX)
+project(Asthak VERSION 0.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -13,52 +13,60 @@ endif()
 
 # Windows specific
 if(WIN32)
-    add_definitions(-DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0600 -DWINVER=0x0600)
+    add_definitions(-DUNICODE -D_UNICODE -DWIN32_LEAN_AND_MEAN -D_WIN32_WINNT=0x0601 -DWINVER=0x0601)
     
-    # Source files
     set(SOURCES
         main.cpp
         src/core/process_cache.cpp
         src/monitor/file_monitor.cpp
         src/monitor/process_monitor.cpp
+        src/monitor/registry_monitor.cpp
         src/network/tcp_table.cpp
         src/network/udp_table.cpp
         src/network/packet_capture.cpp
         src/risk/risk_assessment.cpp
         src/risk/threat_intel.cpp
+        src/risk/hash_scanner.cpp
+        src/risk/pe_analyzer.cpp
+        src/risk/dns_analyzer.cpp
         src/safety/kill_switch.cpp
         src/safety/firewall_blocker.cpp
+        src/safety/self_protection.cpp
+        src/safety/ransomware_guard.cpp
+        src/telemetry/etw_consumer.cpp
         src/utils/logger.cpp
         src/utils/process_verification.cpp
         src/utils/string_utils.cpp
     )
     
-    add_executable(NetSentinel ${SOURCES})
+    add_executable(Asthak ${SOURCES})
     
     # Include directories
-    target_include_directories(NetSentinel PRIVATE 
+    target_include_directories(Asthak PRIVATE 
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
     # User-Mode API Hook DLL
-    add_library(NetSentinel_Hook SHARED src/hooks/netsentinel_hook.cpp)
-    target_link_libraries(NetSentinel_Hook PRIVATE kernel32 user32)
-    # Ensure it's built next to the NetSentinel executable
-    set_target_properties(NetSentinel_Hook PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    add_library(Asthak_Hook SHARED src/hooks/asthak_hook.cpp)
+    target_link_libraries(Asthak_Hook PRIVATE kernel32 user32)
+    # Ensure it's built next to the Asthak executable
+    set_target_properties(Asthak_Hook PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     
     # Link libraries
-    target_link_libraries(NetSentinel PRIVATE
+    target_link_libraries(Asthak PRIVATE
         ws2_32        # Winsock
         iphlpapi      # IP Helper API
         psapi         # Process API
-        advapi32      # Registry/Security
+        advapi32      # Registry/Security/ETW StartTrace
         shell32       # Shell API
         user32        # Windows UI
         ole32         # COM (for firewall)
         oleaut32      # COM Automation (for firewall)
-        wbemuuid      # WMI (for real-time process ETW)
+        wbemuuid      # WMI (for real-time process events)
+        tdh           # Trace Data Helper (for ETW event parsing)
+        bcrypt        # SHA-256 hashing (CNG API)
     )
 
     # YARA Engine configuration
@@ -67,17 +75,17 @@ if(WIN32)
         message(STATUS "YARA Engine is ENABLED")
         add_definitions(-DUSE_YARA)
         # Ensure yara headers are in include/ and yara library in lib/
-        target_include_directories(NetSentinel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-        target_link_directories(NetSentinel PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-        target_link_libraries(NetSentinel PRIVATE yara)
+        target_include_directories(Asthak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+        target_link_directories(Asthak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
+        target_link_libraries(Asthak PRIVATE yara)
     endif()
     
     # Enable optimizations (MinGW/GCC compatible flags)
-    target_compile_options(NetSentinel PRIVATE
+    target_compile_options(Asthak PRIVATE
         $<$<CONFIG:Release>:-O2 -Wall>
         $<$<CONFIG:Debug>:-O0 -g -Wall>
     )
     
     # Manifest for UAC (optional - for future blocking features)
-    # target_sources(NetSentinel PRIVATE NetSentinel.manifest)
+    # target_sources(Asthak PRIVATE Asthak.manifest)
 endif()

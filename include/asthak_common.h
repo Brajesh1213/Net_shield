@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 // Copyright 2026 Brajesh
-// Common definitions for NetSentinel
+// Common definitions for Asthak
 
 #pragma once
 
@@ -20,7 +20,7 @@
 #include <functional>
 #include <sstream>
 
-namespace NetSentinel {
+namespace Asthak {
 
 // Version info
 constexpr uint16_t VERSION_MAJOR = 0;
@@ -97,4 +97,4 @@ using ConnectionCallback = std::function<void(const Connection&)>;
 using AlertCallback = std::function<void(const Alert&)>;
 using LogCallback = std::function<void(const std::wstring&)>;
 
-} // namespace NetSentinel
+} // namespace Asthak

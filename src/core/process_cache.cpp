@@ -8,7 +8,7 @@
 
 #pragma comment(lib, "psapi.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 ProcessCache& ProcessCache::Instance() {    
     static ProcessCache instance;
@@ -129,4 +129,4 @@ void ProcessCache::CleanupExpired() {
     }
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

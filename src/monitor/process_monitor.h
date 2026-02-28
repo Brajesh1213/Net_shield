@@ -7,7 +7,7 @@
 #include <functional>
 #include <atomic>
 
-namespace NetSentinel {
+namespace Asthak {
 
 enum class ProcessThreatType {
     SUSPICIOUS_PARENT,   // Browser/WhatsApp spawning cmd/powershell
@@ -66,4 +66,4 @@ private:
     static DWORD WINAPI MonitorThreadProc(LPVOID param);
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

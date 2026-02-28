@@ -10,7 +10,7 @@
 #include <shlobj.h>
 #include <windows.h> // For OutputDebugStringW
 
-namespace NetSentinel {
+namespace Asthak {
 namespace {
 bool SafeLocalTime(std::tm& out, const std::time_t& in) {
     return localtime_s(&out, &in) == 0;
@@ -84,11 +84,11 @@ std::wstring Logger::GetLogFilePath() {
     auto time = std::chrono::system_clock::to_time_t(now);
     std::tm localTime{};
     if (!SafeLocalTime(localTime, time)) {
-        return logDir_ + L"\\NetSentinel.log";
+        return logDir_ + L"\\Asthak.log";
     }
     
     std::wostringstream oss;
-    oss << logDir_ << L"\\NetSentinel_";
+    oss << logDir_ << L"\\Asthak_";
     oss << std::put_time(&localTime, L"%Y%m%d") << L".log";
     return oss.str();
 }
@@ -104,4 +104,4 @@ std::wstring Logger::LevelToString(LogLevel level) {
     }
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

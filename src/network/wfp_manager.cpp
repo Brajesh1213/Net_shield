@@ -13,7 +13,7 @@
 #pragma comment(lib, "Iphlpapi.lib")
 #pragma comment(lib, "Ws2_32.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 WfpManager& WfpManager::Instance() {
     static WfpManager instance;
@@ -83,7 +83,7 @@ bool WfpManager::BlockRemoteIpPort(const std::wstring& remoteIp,
     // Build filter
     FWPM_FILTER0 filter = {};
     filter.displayData.name        = const_cast<PWSTR>(ruleName.c_str());
-    filter.displayData.description = L"NetSentinel WFP block rule";
+    filter.displayData.description = L"Asthak WFP block rule";
     filter.layerKey                = FWPM_LAYER_ALE_AUTH_CONNECT_V4;
     filter.action.type             = FWP_ACTION_BLOCK;
     filter.numFilterConditions     = 3;
@@ -123,4 +123,4 @@ void WfpManager::RemoveAllRules() {
     m_rules.clear();
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

@@ -1,9 +1,9 @@
 // udp_table.h
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <vector>
 
-namespace NetSentinel {
+namespace Asthak {
 
 class UdpTable {
 public:
@@ -33,4 +33,4 @@ private:
     bool includeLoopback_ = false;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

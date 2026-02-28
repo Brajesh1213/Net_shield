@@ -12,7 +12,7 @@
     #pragma comment(lib, "winhttp.lib")
 #endif
 
-namespace NetSentinel {
+namespace Asthak {
 
 ThreatIntel& ThreatIntel::Instance() {
     static ThreatIntel instance;
@@ -102,7 +102,7 @@ std::wstring ThreatIntel::CheckAbuseIPDB(const std::wstring& ip) {
     }
     
     // Example implementation:
-    // HINTERNET hSession = WinHttpOpen(L"NetSentinel/1.0", ...);
+    // HINTERNET hSession = WinHttpOpen(L"Asthak/1.0", ...);
     // HINTERNET hConnect = WinHttpConnect(hSession, L"api.abuseipdb.com", ...);
     // HINTERNET hRequest = WinHttpOpenRequest(hConnect, L"GET", 
     //     (L"/api/v2/check?ipAddress=" + ip).c_str(), ...);
@@ -151,4 +151,4 @@ void ThreatIntel::SetVirusTotalKey(const std::wstring& apiKey) {
     virusTotalKey_ = apiKey;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

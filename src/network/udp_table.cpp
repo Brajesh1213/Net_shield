@@ -31,7 +31,7 @@ namespace {
         
         g_hIphlpapi = LoadLibraryW(L"iphlpapi.dll");
         if (!g_hIphlpapi) {
-            NetSentinel::Logger::Instance().Error(L"UdpTable: Failed to load iphlpapi.dll");
+            Asthak::Logger::Instance().Error(L"UdpTable: Failed to load iphlpapi.dll");
             g_udpTableLoaded = true;
             return false;
         }
@@ -40,9 +40,9 @@ namespace {
             GetProcAddress(g_hIphlpapi, "GetExtendedUdpTable");
             
         if (!g_pfnGetExtendedUdpTable) {
-             NetSentinel::Logger::Instance().Error(L"UdpTable: GetExtendedUdpTable function not found in iphlpapi.dll");
+             Asthak::Logger::Instance().Error(L"UdpTable: GetExtendedUdpTable function not found in iphlpapi.dll");
         } else {
-             NetSentinel::Logger::Instance().Info(L"UdpTable: Successfully loaded GetExtendedUdpTable");
+             Asthak::Logger::Instance().Info(L"UdpTable: Successfully loaded GetExtendedUdpTable");
         }
         
         g_udpTableLoaded = true;
@@ -52,7 +52,7 @@ namespace {
 
 #pragma comment(lib, "iphlpapi.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 UdpTable::UdpTable() = default;
 UdpTable::~UdpTable() = default;
@@ -209,4 +209,4 @@ std::vector<Connection> UdpTable::GetIPv6Table() {
     return connections;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

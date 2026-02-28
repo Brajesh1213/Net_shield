@@ -7,7 +7,7 @@
 
 #pragma comment(lib, "iphlpapi.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 TcpTable::TcpTable() = default;
 TcpTable::~TcpTable() = default;
@@ -163,4 +163,4 @@ std::vector<Connection> TcpTable::GetIPv6Table() {
     return connections;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

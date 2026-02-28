@@ -5,7 +5,7 @@
 #include <vector>
 #include <windows.h>
 
-namespace NetSentinel {
+namespace Asthak {
 
 FirewallBlocker& FirewallBlocker::Instance() {
     static FirewallBlocker instance;
@@ -36,7 +36,7 @@ void FirewallBlocker::Shutdown() {
 
 std::wstring FirewallBlocker::GenerateRuleName(const std::wstring& ip, uint16_t port, Protocol protocol) {
     std::wostringstream oss;
-    oss << L"NetSentinel_Block_" << ip << L"_" << port;
+    oss << L"Asthak_Block_" << ip << L"_" << port;
     if (protocol == Protocol::TCP) {
         oss << L"_TCP";
     } else if (protocol == Protocol::UDP) {
@@ -47,7 +47,7 @@ std::wstring FirewallBlocker::GenerateRuleName(const std::wstring& ip, uint16_t 
 
 std::wstring FirewallBlocker::GenerateProcessRuleName(const std::wstring& processPath) {
     std::wostringstream oss;
-    oss << L"NetSentinel_Block_Process_";
+    oss << L"Asthak_Block_Process_";
     // Extract filename from path
     size_t lastSlash = processPath.find_last_of(L"\\");
     if (lastSlash != std::wstring::npos) {
@@ -185,5 +185,5 @@ bool FirewallBlocker::IsIPBlocked(const std::wstring& ip) {
     return false;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak
 

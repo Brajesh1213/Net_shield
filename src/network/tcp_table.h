@@ -1,10 +1,10 @@
 // tcp_table.h
 #pragma once
-#include "netsentinel_common.h"
+#include "asthak_common.h"
 #include <vector>
 #include <memory>
 
-namespace NetSentinel {
+namespace Asthak {
 
 class TcpTable {
 public:
@@ -38,4 +38,4 @@ private:
     bool includeLoopback_ = false;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

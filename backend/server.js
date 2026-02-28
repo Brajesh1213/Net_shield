@@ -64,6 +64,6 @@ app.use(errorHandler);
 // ─── Start Server ─────────────────────────────────────────────
 const PORT = config.server.port;
 app.listen(PORT, () => {
-    console.log(`🚀 NetSentinel Backend running on http://localhost:${PORT}`);
+    console.log(`🚀 Asthak Backend running on http://localhost:${PORT}`);
     console.log(`   Environment: ${config.server.nodeEnv}`);
 });

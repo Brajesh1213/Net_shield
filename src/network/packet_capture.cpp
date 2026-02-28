@@ -9,7 +9,7 @@
 #include <yara.h>
 #endif
 
-namespace NetSentinel {
+namespace Asthak {
 
 PacketCapture& PacketCapture::Instance() {
     static PacketCapture instance;
@@ -305,4 +305,4 @@ bool PacketCapture::LoadYaraRules(const std::string& rulesFile) {
 #endif
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

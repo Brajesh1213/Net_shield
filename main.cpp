@@ -13,21 +13,28 @@
 #include <locale>
 #include <sstream>
 
-#include "include/netsentinel_common.h"
+#include "include/asthak_common.h"
 #include "src/network/tcp_table.h"
 #include "src/network/udp_table.h"
 #include "src/network/packet_capture.h"
 #include "src/risk/risk_assessment.h"
 #include "src/risk/threat_intel.h"
+#include "src/risk/hash_scanner.h"
+#include "src/risk/pe_analyzer.h"
+#include "src/risk/dns_analyzer.h"
 #include "src/safety/kill_switch.h"
 #include "src/safety/firewall_blocker.h"
+#include "src/safety/self_protection.h"
+#include "src/safety/ransomware_guard.h"
+#include "src/telemetry/etw_consumer.h"
 #include "src/utils/logger.h"
 #include "src/core/process_cache.h"
 #include "src/monitor/file_monitor.h"
 #include "src/monitor/process_monitor.h"
+#include "src/monitor/registry_monitor.h"
 
 
-using namespace NetSentinel;
+using namespace Asthak;
 using namespace std::chrono;
 
 namespace {
@@ -82,14 +89,14 @@ bool InitializeLogger() {
         return false;
     }
     
-    std::wstring logDir = std::wstring(path) + L"\\NetSentinel\\Logs";
+    std::wstring logDir = std::wstring(path) + L"\\Asthak\\Logs";
     return Logger::Instance().Initialize(logDir);
 }
 
 // Print banner
 void PrintBanner() {
     std::cout << "\n";
-    std::cout << "NetSentinel v" << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << "\n";
+    std::cout << "Asthak v" << VERSION_MAJOR << "." << VERSION_MINOR << "." << VERSION_PATCH << "\n";
     std::cout << "Network Security Monitor & Protection\n";
     std::cout << "Status: ACTIVE (Protection available if running as Admin)\n";
     std::cout << "\n" << std::flush;
@@ -133,7 +140,7 @@ int main() {
     
     // Kill switch check
     if (KillSwitch::IsDisabled()) {
-        std::cout << "[WARN] NetSentinel is DISABLED via kill switch\n" << std::flush;
+        std::cout << "[WARN] Asthak is DISABLED via kill switch\n" << std::flush;
         return 0;
     }
     
@@ -142,7 +149,7 @@ int main() {
         std::cout << "[WARN] Failed to initialize logger (continuing)\n" << std::flush;
     }
     
-    Logger::Instance().Info(L"NetSentinel starting...");
+    Logger::Instance().Info(L"Asthak starting...");
     
     // Print banner
     PrintBanner();
@@ -197,11 +204,136 @@ int main() {
         std::cout << "[OK] Packet capture initialized\n" << std::flush;
     }
     
+    // ── Initialize Hash Scanner ──────────────────────────────────────────────
+    HashScanner& hashScanner = HashScanner::Instance();
+    hashScanner.Initialize();
+    std::cout << "[OK] Hash scanner initialized (" << hashScanner.GetBlocklistSize() << " known hashes)\n" << std::flush;
+    
+    // ── Initialize PE Analyzer ───────────────────────────────────────────────
+    PeAnalyzer& peAnalyzer = PeAnalyzer::Instance();
+    std::cout << "[OK] PE static analyzer ready (entropy + import + packer detection)\n" << std::flush;
+    
+    // ── Initialize DNS Analyzer ──────────────────────────────────────────────
+    DnsAnalyzer& dnsAnalyzer = DnsAnalyzer::Instance();
+    dnsAnalyzer.Initialize();
+    std::cout << "[OK] DNS threat intelligence active (DGA + C2 detection)\n" << std::flush;
+    
+    // ── Initialize Ransomware Guard ──────────────────────────────────────────
+    RansomwareGuard& ransomGuard = RansomwareGuard::Instance();
+    ransomGuard.Initialize();
+    ransomGuard.Start([](const RansomwareAlert& alert) {
+        std::string msg = "[RANSOMWARE] " + WStr(alert.detail);
+        std::cout << "\n\033[91m" << msg << "\033[0m\n" << std::flush;
+        Logger::Instance().Critical(L"[RANSOMWARE] " + alert.detail);
+    });
+    std::cout << "[OK] Ransomware guard active (mass encryption detection + VSS)\n" << std::flush;
+    
+    // ── Enable Self-Protection ───────────────────────────────────────────────
+    SelfProtection& selfProtect = SelfProtection::Instance();
+    selfProtect.Enable();
+    std::cout << "[OK] Self-protection enabled (DACL hardened, watchdog active)\n" << std::flush;
+    
+    // ── Start ETW Consumer (deep OS telemetry) ──────────────────────────────
+    EtwConsumer etwConsumer;
+    bool etwStarted = etwConsumer.Start([&dnsAnalyzer, &peAnalyzer](const EtwEvent& evt) {
+        switch (evt.type) {
+            case EtwEventType::DNS_QUERY: {
+                // Run through DNS threat intelligence
+                auto dnsResult = dnsAnalyzer.AnalyzeDomain(evt.detail);
+                if (dnsResult.verdict != DnsVerdict::CLEAN) {
+                    std::string msg = "[ETW:DNS] " + WStr(dnsResult.reason);
+                    std::cout << "\n\033[93m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
+                    Logger::Instance().Warning(L"[ETW:DNS] " + dnsResult.reason);
+                }
+                break;
+            }
+            case EtwEventType::POWERSHELL_SCRIPT: {
+                // Detect suspicious PowerShell: encoded commands, downloads, etc.
+                std::wstring lower = evt.detail;
+                std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
+                bool suspicious = false;
+                std::wstring reason;
+                if (lower.find(L"invoke-expression") != std::wstring::npos ||
+                    lower.find(L"iex(") != std::wstring::npos ||
+                    lower.find(L"iex ") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"Invoke-Expression detected";
+                }
+                if (lower.find(L"downloadstring") != std::wstring::npos ||
+                    lower.find(L"downloadfile") != std::wstring::npos ||
+                    lower.find(L"webclient") != std::wstring::npos ||
+                    lower.find(L"net.webclient") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"Remote download detected";
+                }
+                if (lower.find(L"bypass") != std::wstring::npos &&
+                    lower.find(L"executionpolicy") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"Execution policy bypass";
+                }
+                if (lower.find(L"-enc ") != std::wstring::npos ||
+                    lower.find(L"-encodedcommand") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"Encoded command detected";
+                }
+                if (lower.find(L"mimikatz") != std::wstring::npos ||
+                    lower.find(L"sekurlsa") != std::wstring::npos ||
+                    lower.find(L"kerberos::list") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"Credential dumping tool detected";
+                }
+                if (lower.find(L"amsiutils") != std::wstring::npos ||
+                    lower.find(L"amsiinitfailed") != std::wstring::npos) {
+                    suspicious = true;
+                    reason = L"AMSI bypass attempt detected";
+                }
+                if (suspicious) {
+                    std::string msg = "[ETW:PS] Suspicious PowerShell: " + WStr(reason);
+                    std::cout << "\n\033[91m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
+                    Logger::Instance().Critical(L"[ETW:PS] " + reason + L" | Script: " + evt.detail.substr(0, 200));
+                }
+                break;
+            }
+            case EtwEventType::PROCESS_CREATE: {
+                // Log process creation with command line for forensics
+                if (!evt.detail.empty()) {
+                    Logger::Instance().Info(L"[ETW:PROC] New process: " + evt.processName + L" | CMD: " + evt.detail);
+                }
+                break;
+            }
+            case EtwEventType::IMAGE_LOAD: {
+                // Detect DLL side-loading from unusual paths
+                std::wstring lower = evt.detail;
+                std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
+                if (lower.find(L"\\temp\\") != std::wstring::npos ||
+                    lower.find(L"\\downloads\\") != std::wstring::npos ||
+                    lower.find(L"\\appdata\\local\\temp") != std::wstring::npos) {
+                    // Run PE analysis on suspicious DLLs
+                    auto peResult = peAnalyzer.AnalyzeFile(evt.detail);
+                    if (peResult.verdict == PeVerdict::LIKELY_MALWARE ||
+                        peResult.verdict == PeVerdict::SUSPICIOUS) {
+                        std::string msg = "[ETW:DLL] Suspicious DLL: " + WStr(evt.detail) +
+                                          " (score: " + std::to_string(peResult.overallScore).substr(0, 4) + ")";
+                        std::cout << "\n\033[91m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
+                        Logger::Instance().Critical(L"[ETW:DLL] " + peResult.detail + L" | " + evt.detail);
+                    }
+                }
+                break;
+            }
+            default: break;
+        }
+    });
+    if (etwStarted) {
+        std::cout << "[OK] ETW consumer active (DNS + PowerShell + Process + Image telemetry)\n" << std::flush;
+    } else {
+        std::cout << "[WARN] ETW consumer failed to start (may need admin rights)\n" << std::flush;
+    }
+
     PrintHeader();
     
     // ── Start File Monitor (steganography + malware drop detection) ───────────
     FileMonitor fileMonitor;
-    fileMonitor.Start([](const FileThreat& threat) {
+    fileMonitor.Start([&hashScanner, &peAnalyzer](const FileThreat& threat) {
         std::string msg = "[FILE THREAT] " + WStr(threat.detailMessage);
         std::cout << "\n" << msg << "\n" << std::flush;
         Logger::Instance().Critical(L"[FILE THREAT] " + threat.detailMessage);
@@ -215,8 +347,17 @@ int main() {
         Logger::Instance().Critical(L"[PROCESS THREAT] " + threat.detailMessage);
     });
 
-    std::cout << "[OK] File system monitor active (watching Downloads, Desktop, Temp, Startup)\n" << std::flush;
+    // ── Start Registry Monitor (persistence detection) ───────────────────────
+    RegistryMonitor regMonitor;
+    regMonitor.Start([](const RegistryThreat& threat) {
+        std::string msg = "[REGISTRY] " + WStr(threat.detail);
+        std::cout << "\n\033[95m" << msg << "\033[0m\n" << std::flush;
+        Logger::Instance().Critical(L"[REGISTRY] " + threat.detail);
+    });
+
+    std::cout << "[OK] File system monitor active (watching 9 directories)\n" << std::flush;
     std::cout << "[OK] Process monitor active (watching for child exploits and masquerading)\n" << std::flush;
+    std::cout << "[OK] Registry monitor active (watching 7 persistence keys)\n" << std::flush;
     
     // Stats
 
@@ -460,7 +601,7 @@ int main() {
     // Cleanup
     auto runtime = duration_cast<seconds>(steady_clock::now() - startTime);
     std::wostringstream shutdownMsg;
-    shutdownMsg << L"NetSentinel shutting down. Runtime: " << runtime.count() << L"s, "
+    shutdownMsg << L"Asthak shutting down. Runtime: " << runtime.count() << L"s, "
                 << L"Total connections: " << totalConnections;
     Logger::Instance().Info(shutdownMsg.str());
     

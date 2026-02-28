@@ -1,10 +1,10 @@
-// quarantine.h — File quarantine subsystem for NetSentinel
+// quarantine.h — File quarantine subsystem for Asthak
 #pragma once
 #include <windows.h>
 #include <string>
 #include <vector>
 
-namespace NetSentinel {
+namespace Asthak {
 
 struct QuarantineEntry {
     std::wstring originalPath;    // Where the file originally lived
@@ -55,4 +55,4 @@ private:
     bool                         m_initialized{ false };
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

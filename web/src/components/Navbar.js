@@ -21,7 +21,7 @@ const Navbar = () => {
                         <div className="relative flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg shadow-indigo-500/40">
                             <Shield className="h-6 w-6 text-white" />
                         </div>
-                        <span className="font-bold text-2xl tracking-tight text-white">Net<span className="text-indigo-400">Sentinel</span></span>
+                        <span className="font-bold text-2xl tracking-tight text-white">As<span className="text-indigo-400">thak</span></span>
                     </Link>
 
                     {/* Desktop Menu */}

@@ -3,7 +3,7 @@
 #include <string>
 #include <windows.h>
 
-namespace NetSentinel {
+namespace Asthak {
 
 struct ProcessVerificationResult {
     bool isMicrosoftSigned = false;
@@ -17,4 +17,4 @@ ProcessVerificationResult VerifyProcess(const std::wstring& processName, DWORD p
 bool IsMicrosoftSigned(const std::wstring& filePath, std::wstring& outSigner);
 bool IsInTrustedLocation(const std::wstring& filePath);
 
-} // namespace NetSentinel
+} // namespace Asthak

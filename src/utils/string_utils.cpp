@@ -7,7 +7,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace NetSentinel::Utils {
+namespace Asthak::Utils {
 
 std::wstring IPv4ToString(uint32_t ip) {
     in_addr addr;
@@ -123,4 +123,4 @@ std::wstring UTF8ToWide(const std::string& str) {
     return result;
 }
 
-} // namespace NetSentinel::Utils
+} // namespace Asthak::Utils

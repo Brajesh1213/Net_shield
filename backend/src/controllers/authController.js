@@ -120,8 +120,8 @@ function resolveSubscription(user) {
         return {
             status: 'expired',
             label: 'Beta Expired',
-            message: 'Your free Beta has ended. Subscribe at netsentinel.com to continue protection.',
-            action_url: 'https://netsentinel.com/pricing',
+            message: 'Your free Beta has ended. Subscribe at asthak.com to continue protection.',
+            action_url: 'https://asthak.com/pricing',
         };
     }
 

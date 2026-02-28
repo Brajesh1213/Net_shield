@@ -1,4 +1,4 @@
-[  6%] Building CXX object CMakeFiles/NetSentinel.dir/src/utils/logger.cpp.obj
+[  6%] Building CXX object CMakeFiles/Asthak.dir/src/utils/logger.cpp.obj
 mingw32-make : In file included from 
 C:\Users\HP\Desktop\rp\src\utils\logger.cpp:2:
 At line:1 char:1
@@ -70,8 +70,8 @@ C:/Users/HP/Desktop/rp/src/utils/string_utils.h:27:22: note:
 'uint32_t' is defined in header '<cstdint>'; this is probably 
 fixable by adding '#include <cstdint>'
 mingw32-make[2]: *** 
-[CMakeFiles\NetSentinel.dir\build.make:244: 
-CMakeFiles/NetSentinel.dir/src/utils/logger.cpp.obj] Error 1
+[CMakeFiles\Asthak.dir\build.make:244: 
+CMakeFiles/Asthak.dir/src/utils/logger.cpp.obj] Error 1
 mingw32-make[1]: *** [CMakeFiles\Makefile2:86: 
-CMakeFiles/NetSentinel.dir/all] Error 2
+CMakeFiles/Asthak.dir/all] Error 2
 mingw32-make: *** [Makefile:90: all] Error 2

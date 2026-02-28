@@ -6,7 +6,7 @@
 #include <chrono>
 #include <cstdint>
 
-namespace NetSentinel {
+namespace Asthak {
 
 struct ProcessInfo {
     std::wstring name;
@@ -43,4 +43,4 @@ private:
     std::chrono::seconds ttl_{30};
 };
 
-} // namespace NetSentinel
+} // namespace Asthak

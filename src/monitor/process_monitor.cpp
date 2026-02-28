@@ -27,7 +27,7 @@ namespace {
 #pragma comment(lib, "psapi.lib")
 #pragma comment(lib, "wbemuuid.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 // ── MinGW 6.3: std::to_wstring is broken, use wostringstream ─────────────────
 namespace {
@@ -575,13 +575,13 @@ bool ProcessMonitor::IsMasquerading(const std::wstring& /*name*/, const std::wst
 }
 
 bool ProcessMonitor::InjectProtectiveDLL(DWORD pid) {
-    // 1. Get path to our DLL (must be compiled and placed next to NetSentinel.exe)
+    // 1. Get path to our DLL (must be compiled and placed next to Asthak.exe)
     wchar_t exePath[MAX_PATH] = {};
     GetModuleFileNameW(NULL, exePath, MAX_PATH);
     std::wstring dllPath = std::wstring(exePath);
     size_t lastSlash = dllPath.find_last_of(L"\\/");
     if (lastSlash != std::wstring::npos) {
-        dllPath = dllPath.substr(0, lastSlash + 1) + L"NetSentinel_Hook.dll";
+        dllPath = dllPath.substr(0, lastSlash + 1) + L"Asthak_Hook.dll";
     }
 
     // 2. Open Target Process
@@ -633,4 +633,4 @@ bool ProcessMonitor::InjectProtectiveDLL(DWORD pid) {
     return true;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

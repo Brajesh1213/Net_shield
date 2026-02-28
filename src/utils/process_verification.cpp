@@ -5,7 +5,7 @@
 #include <cwctype>
 #include <vector>
 
-namespace NetSentinel {
+namespace Asthak {
 
 bool IsMicrosoftSigned(const std::wstring& filePath, std::wstring& outSigner) {
     // Fallback heuristic for environments without WinTrust headers/libs.
@@ -66,4 +66,4 @@ ProcessVerificationResult VerifyProcess(const std::wstring& processName, DWORD p
     return result;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

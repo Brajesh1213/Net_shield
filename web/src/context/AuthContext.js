@@ -14,6 +14,7 @@ export const AuthProvider = ({ children }) => {
             fetch(`${API}/auth/me`, { headers: { Authorization: `Bearer ${token}` } })
                 .then(r => r.ok ? r.json() : null)
                 .then(data => { if (data) setUser(data); })
+                .catch(() => { /* backend offline — continue as logged-out */ })
                 .finally(() => setLoading(false));
         } else {
             setLoading(false);
@@ -21,11 +22,16 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const login = async (email, password) => {
-        const res  = await fetch(`${API}/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
+        let res;
+        try {
+            res = await fetch(`${API}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+        } catch {
+            throw new Error('Cannot connect to server. Is the backend running?');
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Login failed');
         localStorage.setItem('ns_token', data.token);
@@ -34,11 +40,16 @@ export const AuthProvider = ({ children }) => {
     };
 
     const register = async (email, password) => {
-        const res  = await fetch(`${API}/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
+        let res;
+        try {
+            res = await fetch(`${API}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+        } catch {
+            throw new Error('Cannot connect to server. Is the backend running?');
+        }
         const data = await res.json();
         if (!res.ok) throw new Error(data.message || 'Registration failed');
         return data;
@@ -47,9 +58,11 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         const token = localStorage.getItem('ns_token');
         if (token) {
-            await fetch(`${API}/auth/logout`, {
-                method: 'POST', headers: { Authorization: `Bearer ${token}` }
-            });
+            try {
+                await fetch(`${API}/auth/logout`, {
+                    method: 'POST', headers: { Authorization: `Bearer ${token}` }
+                });
+            } catch { /* backend offline — just clear local state */ }
         }
         localStorage.removeItem('ns_token');
         setUser(null);

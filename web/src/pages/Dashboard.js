@@ -85,7 +85,7 @@ const Dashboard = () => {
             <div className="w-64 glass border-r hidden md:flex flex-col pt-6">
                 <div className="px-6 mb-10 flex items-center gap-2">
                     <Shield className="h-6 w-6 text-indigo-400" />
-                    <span className="font-bold text-xl text-white">NetSentinel</span>
+                    <span className="font-bold text-xl text-white">Asthak</span>
                 </div>
                 <div className="px-4 space-y-1 flex-1">
                     {sidebarItems.map(({ id, icon: Icon, label }) => (
@@ -148,7 +148,7 @@ const Dashboard = () => {
                                     <div className="text-center py-20 text-slate-500">
                                         <Server className="h-12 w-12 mx-auto mb-3 opacity-30" />
                                         <p className="font-medium">No devices registered yet</p>
-                                        <p className="text-sm mt-1">Download and log in to the NetSentinel app to register a device.</p>
+                                        <p className="text-sm mt-1">Download and log in to the Asthak app to register a device.</p>
                                     </div>
                                 ) : (
                                     <table className="w-full text-left text-sm text-slate-300">

@@ -7,7 +7,7 @@
 
 #pragma comment(lib, "shell32.lib")
 
-namespace NetSentinel {
+namespace Asthak {
 
 // ── MinGW 6.3 compatible wstring number helper ────────────────────────────────
 namespace {
@@ -31,25 +31,46 @@ static const std::vector<std::wstring> kDocExts = {
 std::vector<std::wstring> FileMonitor::GetWatchFolders() {
     std::vector<std::wstring> folders;
 
-    // Downloads: %USERPROFILE%\Downloads  (works on all Windows versions)
-    wchar_t userProfile[MAX_PATH] = {};
-    if (GetEnvironmentVariableW(L"USERPROFILE", userProfile, MAX_PATH)) {
-        folders.push_back(std::wstring(userProfile) + L"\\Downloads");
+    wchar_t buf[MAX_PATH] = {};
+
+    // ── Original 4 folders ──────────────────────────────────────────────────
+    // Downloads via %USERPROFILE%\Downloads
+    if (GetEnvironmentVariableW(L"USERPROFILE", buf, MAX_PATH)) {
+        folders.push_back(std::wstring(buf) + L"\\Downloads");
     }
 
-    // Desktop via CSIDL (works in MinGW 6.3)
-    wchar_t desk[MAX_PATH] = {};
-    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, 0, desk)))
-        folders.push_back(desk);
+    // Desktop via CSIDL
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_DESKTOPDIRECTORY, nullptr, 0, buf)))
+        folders.push_back(buf);
 
     // Temp via GetTempPath
     wchar_t tmp[MAX_PATH] = {};
     if (GetTempPathW(MAX_PATH, tmp)) folders.push_back(tmp);
 
     // Startup — mark with [STARTUP] suffix so WatchFolder can flag differently
-    wchar_t startup[MAX_PATH] = {};
-    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_STARTUP, nullptr, 0, startup)))
-        folders.push_back(std::wstring(startup) + L"[STARTUP]");
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_STARTUP, nullptr, 0, buf)))
+        folders.push_back(std::wstring(buf) + L"[STARTUP]");
+
+    // ── NEW: Additional high-risk directories ───────────────────────────────
+    // %APPDATA% — common malware persistence (AppData\Roaming)
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_APPDATA, nullptr, 0, buf)))
+        folders.push_back(buf);
+
+    // %LOCALAPPDATA% — frequent malware drop point (AppData\Local)
+    if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_LOCAL_APPDATA, nullptr, 0, buf)))
+        folders.push_back(buf);
+
+    // %PROGRAMDATA% — shared app data, abused for hidden drops
+    if (GetEnvironmentVariableW(L"PROGRAMDATA", buf, MAX_PATH))
+        folders.push_back(buf);
+
+    // %PUBLIC% — Public folder, writable by all users
+    if (GetEnvironmentVariableW(L"PUBLIC", buf, MAX_PATH))
+        folders.push_back(buf);
+
+    // %USERPROFILE%\Documents — macro-enabled Office docs
+    if (GetEnvironmentVariableW(L"USERPROFILE", buf, MAX_PATH))
+        folders.push_back(std::wstring(buf) + L"\\Documents");
 
     return folders;
 }
@@ -273,4 +294,4 @@ bool FileMonitor::IsSteganography(const std::wstring& filePath, const std::wstri
     return false;
 }
 
-} // namespace NetSentinel
+} // namespace Asthak

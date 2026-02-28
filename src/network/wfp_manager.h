@@ -5,7 +5,7 @@
 #include <vector>
 #include <cstdint>
 
-namespace NetSentinel {
+namespace Asthak {
 
 struct WfpRule {
     std::wstring   remoteIp;
@@ -47,4 +47,4 @@ private:
     std::vector<WfpRule> m_rules;
 };
 
-} // namespace NetSentinel
+} // namespace Asthak
