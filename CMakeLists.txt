@@ -42,6 +42,12 @@ if(WIN32)
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
     
+    # User-Mode API Hook DLL
+    add_library(NetSentinel_Hook SHARED src/hooks/netsentinel_hook.cpp)
+    target_link_libraries(NetSentinel_Hook PRIVATE kernel32 user32)
+    # Ensure it's built next to the NetSentinel executable
+    set_target_properties(NetSentinel_Hook PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    
     # Link libraries
     target_link_libraries(NetSentinel PRIVATE
         ws2_32        # Winsock

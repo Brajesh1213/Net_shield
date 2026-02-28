@@ -122,17 +122,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 dashThreats.textContent = threatCount;
                 timelineThisSecond++;
 
+                let badgeHtml = lower.includes('[file threat]')
+                    ? '<span class="badge badge-file">FILE</span>'
+                    : '<span class="badge badge-proc">PROCESS</span>';
+                
+                let detectedHtml = '<td><span class="badge badge-alert">DETECTED</span></td>';
+
+                if (lower.includes('memory injection attack')) {
+                    badgeHtml = '<span class="badge badge-high" style="background:#8b5cf6;color:white;">INJECTION</span>';
+                } else if (lower.includes('edr hook injected')) {
+                    badgeHtml = '<span class="badge badge-success" style="background:#10b981;color:white;">SHIELD</span>';
+                    detectedHtml = '<td><span class="badge badge-success" style="background:#10b981;color:white;">HOOKED</span></td>';
+                    // Don't count hooks as raw threats in the stat counter
+                    threatCount--;
+                    statEvents.textContent = threatCount;
+                    dashThreats.textContent = threatCount;
+                }
+
                 // Also push to dashboard threats table
                 const emptyRow = threatsTbody.querySelector('.empty-row');
                 if (emptyRow) emptyRow.remove();
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="threat-time">${new Date().toLocaleTimeString()}</td>
-                    <td>${lower.includes('[file threat]')
-                        ? '<span class="badge badge-file">FILE</span>'
-                        : '<span class="badge badge-proc">PROCESS</span>'}</td>
-                    <td class="threat-msg">${escapeHtml(line.replace(/\[.*?\]\s*/g,'').trim().substring(0,90))}</td>
-                    <td><span class="badge badge-alert">DETECTED</span></td>
+                    <td>${badgeHtml}</td>
+                    <td class="threat-msg" style="${lower.includes('edr hook') ? 'color:#10b981;' : lower.includes('memory injection') ? 'color:#c4b5fd;' : ''}">${escapeHtml(line.replace(/\[.*?\]\s*/g,'').trim().substring(0,105))}</td>
+                    ${detectedHtml}
                 `;
                 threatsTbody.insertBefore(tr, threatsTbody.firstChild);
                 while (threatsTbody.rows.length > 50) threatsTbody.deleteRow(threatsTbody.rows.length - 1);

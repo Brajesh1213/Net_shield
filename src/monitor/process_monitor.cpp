@@ -7,9 +7,21 @@
 #include <sstream>
 #include <vector>
 #include <wbemidl.h>
+#include "network/packet_capture.h"
 
 #ifdef USE_YARA
 #include <yara.h>
+
+namespace {985
+    
+    int ProcessYaraScanCallback(YR_SCAN_CONTEXT* context, int message, void* message_data, void* user_data) {
+        if (message == CALLBACK_MSG_RULE_MATCHING) {
+            bool* matched = (bool*)user_data;
+            *matched = true;
+        }
+        return CALLBACK_CONTINUE;
+    }
+}
 #endif
 
 #pragma comment(lib, "psapi.lib")
@@ -397,6 +409,33 @@ void ProcessMonitor::CheckProcess(DWORD pid, DWORD parentPid,
             if (m_callback) m_callback(t);
         }
     }
+
+    // ── 6. EDR Proactive Defense: Inject Our Protective DLL ──────────────────
+    // If it's a new process and seems okay, we still inject our hook DLL.
+    // This hooks CreateRemoteThread, blocking this process if it later turns malicious.
+    if (!m_alertedPids.count(pid)) {
+        // Run injection asynchronously to not block the ETW monitoring loop
+        struct InjectParam { ProcessMonitor* pm; DWORD pid; std::wstring name; ProcessThreatCallback cb; };
+        InjectParam* p = new InjectParam{this, pid, name, m_callback};
+        
+        HANDLE hThread = CreateThread(NULL, 0, [](LPVOID param) -> DWORD {
+            InjectParam* p = (InjectParam*)param;
+            if (p->pm->InjectProtectiveDLL(p->pid)) {
+                if (p->cb) {
+                    ProcessThreat t;
+                    t.type = ProcessThreatType::MEMORY_INJECTION; // Reuse memory injection struct safely
+                    t.pid = p->pid;
+                    t.processName = p->name;
+                    t.detailMessage = L"EDR HOOK INJECTED: Protective Ring successfully initialized in '" + p->name + L"' (PID:" + std::to_wstring(p->pid) + L") to prevent zero-day exploits.";
+                    // We don't want to technically 'alert' it as a block, but rather as proactive intel
+                    p->cb(t);
+                }
+            }
+            delete p;
+            return 0;
+        }, p, 0, NULL);
+        if (hThread) CloseHandle(hThread);
+    }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -466,10 +505,23 @@ bool ProcessMonitor::ScanProcessMemoryForInjection(DWORD pid) {
                         if (ReadProcessMemory(hProcess, mbi.BaseAddress, memBuffer.data(), mbi.RegionSize, &bytesRead)) {
                             
 #ifdef USE_YARA
-                            // Assuming yaraRules_ is somehow accessible via PacketCapture::Instance() or a static manager.
-                            // For this file, we can invoke YARA directly if we have access to the rules, 
-                            // OR fallback to heuristic checks. To keep it decoupled right now, we use a basic heuristic 
-                            // for known malicious shellcode patterns (like Meterpreter or Cobalt Strike prologues)
+                            void* yRules = PacketCapture::Instance().GetYaraRules();
+                            if (yRules) {
+                                bool matched = false;
+                                yr_rules_scan_mem(
+                                    static_cast<YR_RULES*>(yRules),
+                                    memBuffer.data(),
+                                    memBuffer.size(),
+                                    0,
+                                    ProcessYaraScanCallback,
+                                    &matched,
+                                    0
+                                );
+                                if (matched) {
+                                    CloseHandle(hProcess);
+                                    return true;
+                                }
+                            }
 #endif
                             // Basic Heuristic: If we find NOP sleds (0x90 0x90 0x90) or common Reverse Shell hex patterns
                             size_t nopSledSize = 0;
@@ -520,6 +572,65 @@ bool ProcessMonitor::IsMasquerading(const std::wstring& /*name*/, const std::wst
     std::transform(lp.begin(), lp.end(), lp.begin(), ::towlower);
     return lp.find(L"\\system32\\") == std::wstring::npos &&
            lp.find(L"\\syswow64\\") == std::wstring::npos;
+}
+
+bool ProcessMonitor::InjectProtectiveDLL(DWORD pid) {
+    // 1. Get path to our DLL (must be compiled and placed next to NetSentinel.exe)
+    wchar_t exePath[MAX_PATH] = {};
+    GetModuleFileNameW(NULL, exePath, MAX_PATH);
+    std::wstring dllPath = std::wstring(exePath);
+    size_t lastSlash = dllPath.find_last_of(L"\\/");
+    if (lastSlash != std::wstring::npos) {
+        dllPath = dllPath.substr(0, lastSlash + 1) + L"NetSentinel_Hook.dll";
+    }
+
+    // 2. Open Target Process
+    HANDLE hProcess = OpenProcess(PROCESS_CREATE_THREAD | PROCESS_QUERY_INFORMATION | 
+                                  PROCESS_VM_OPERATION | PROCESS_VM_WRITE | PROCESS_VM_READ, 
+                                  FALSE, pid);
+    if (!hProcess) return false;
+
+    // 3. Allocate memory in target process for the DLL path string
+    size_t pathSize = (dllPath.length() + 1) * sizeof(wchar_t);
+    LPVOID pRemoteBuf = VirtualAllocEx(hProcess, NULL, pathSize, MEM_COMMIT, PAGE_READWRITE);
+    if (!pRemoteBuf) {
+        CloseHandle(hProcess);
+        return false;
+    }
+
+    // 4. Write the DLL path into the target process
+    if (!WriteProcessMemory(hProcess, pRemoteBuf, dllPath.c_str(), pathSize, NULL)) {
+        VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return false;
+    }
+
+    // 5. Get memory address of LoadLibraryW in Kernel32.dll (it's the same in all processes)
+    HMODULE hKernel32 = GetModuleHandleW(L"kernel32.dll");
+    LPVOID pLoadLibrary = (LPVOID)GetProcAddress(hKernel32, "LoadLibraryW");
+    if (!pLoadLibrary) {
+        VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return false;
+    }
+
+    // 6. Force the target process to create a thread that runs LoadLibraryW(our_dll_path)
+    HANDLE hThread = CreateRemoteThread(hProcess, NULL, 0, 
+                                        (LPTHREAD_START_ROUTINE)pLoadLibrary, 
+                                        pRemoteBuf, 0, NULL);
+    if (!hThread) {
+        VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+        CloseHandle(hProcess);
+        return false;
+    }
+
+    // Give it a moment to load and then clean up our memory footprints
+    WaitForSingleObject(hThread, 2000);
+    CloseHandle(hThread);
+    VirtualFreeEx(hProcess, pRemoteBuf, 0, MEM_RELEASE);
+    CloseHandle(hProcess);
+    
+    return true;
 }
 
 } // namespace NetSentinel

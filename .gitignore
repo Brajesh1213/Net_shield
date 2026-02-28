@@ -1,6 +1,8 @@
 # Build directories
-/build/
-/test_build/
+build/
+test_build/
+dist/
+node_modules/
 
 # CMake generated files
 CMakeCache.txt

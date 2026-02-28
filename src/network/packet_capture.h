@@ -57,6 +57,8 @@ private:
 
     // YARA Engine
     void* yaraRules_ = nullptr; // void* to avoid requiring yara.h in header
+public:
+    void* GetYaraRules() const { return yaraRules_; }
     bool LoadYaraRules(const std::string& rulesFile);
 };
 

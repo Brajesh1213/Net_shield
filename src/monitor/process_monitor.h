@@ -42,6 +42,7 @@ public:
     std::wstring GetProcessPath(DWORD pid);
     std::wstring GetProcessName(DWORD pid);
     bool         ScanProcessMemoryForInjection(DWORD pid);
+    bool         InjectProtectiveDLL(DWORD pid);
 
 private:
     void MonitorLoop();
