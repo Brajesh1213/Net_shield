@@ -3,13 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Asthak — Real-time network security monitor and threat blocker">
-    <title>Asthak Monitor</title>
+    <meta name="description" content="NetSentinel — Real-time network security monitor and threat blocker">
+    <title>NetSentinel</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
+
+    <!-- ══════ LOGIN OVERLAY (shown before user authenticates) ═══════════════ -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card">
+            <div class="login-logo">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+            </div>
+            <h2 class="login-title">NetSentinel</h2>
+            <p class="login-subtitle">Sign in to activate your protection</p>
+
+            <div id="login-error" class="login-error" style="display:none;"></div>
+
+            <div class="login-field">
+                <label>Email</label>
+                <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email" />
+            </div>
+            <div class="login-field">
+                <label>Password</label>
+                <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
+            </div>
+
+            <button id="login-submit-btn" class="login-btn">
+                <span id="login-btn-text">Sign In & Start Protection</span>
+                <span id="login-btn-spinner" style="display:none;">Authenticating...</span>
+            </button>
+
+            <p class="login-footer">Don't have an account? <a href="http://localhost:3000/register" target="_blank">Register at netsentinel.com</a></p>
+        </div>
+    </div>
+
+    <!-- ══════ SUBSCRIPTION ALERT BANNER ═════════════════════════════════════ -->
+    <div id="sub-alert-banner" class="sub-alert-banner" style="display:none;">
+        <span id="sub-alert-msg"></span>
+        <a id="sub-alert-link" href="http://localhost:3000/pricing" target="_blank" style="display:none;">Subscribe →</a>
+        <button id="sub-alert-close" onclick="document.getElementById('sub-alert-banner').style.display='none'">✕</button>
+    </div>
+
+
     <div class="app-container">
         <!-- Header -->
         <header class="header">

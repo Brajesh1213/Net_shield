@@ -12,7 +12,7 @@
 #ifdef USE_YARA
 #include <yara.h>
 
-namespace {985
+namespace {
     
     int ProcessYaraScanCallback(YR_SCAN_CONTEXT* context, int message, void* message_data, void* user_data) {
         if (message == CALLBACK_MSG_RULE_MATCHING) {

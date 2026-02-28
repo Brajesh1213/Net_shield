@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { Zap, ChevronRight, Activity, Lock, Database } from 'lucide-react';
 import Navbar from '../components/Navbar';
 
@@ -28,9 +29,9 @@ const LandingPage = () => {
             <a href="/NetSentinel_Beta_v1.0.0.zip" download className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-lg hover:from-indigo-400 hover:to-purple-500 transition-all shadow-lg shadow-indigo-500/40 hover:shadow-indigo-500/60 flex items-center justify-center gap-2">
               Download Beta (Windows) <ChevronRight className="h-5 w-5" />
             </a>
-            <button className="px-8 py-4 rounded-full glass text-slate-200 font-bold text-lg hover:bg-slate-800/80 transition-all border border-slate-700 flex items-center justify-center gap-2">
+            <Link to="/docs" className="px-8 py-4 rounded-full glass text-slate-200 font-bold text-lg hover:bg-slate-800/80 transition-all border border-slate-700 flex items-center justify-center gap-2">
               View Documentation
-            </button>
+            </Link>
           </div>
         </div>
 

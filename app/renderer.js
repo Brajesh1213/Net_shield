@@ -1,5 +1,110 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // ══════════════════════════════════════════════════════════════════════
+    // AUTH — LOGIN OVERLAY
+    // ══════════════════════════════════════════════════════════════════════
+    const loginOverlay  = document.getElementById('login-overlay');
+    const loginEmail    = document.getElementById('login-email');
+    const loginPassword = document.getElementById('login-password');
+    const loginSubmit   = document.getElementById('login-submit-btn');
+    const loginBtnText  = document.getElementById('login-btn-text');
+    const loginSpinner  = document.getElementById('login-btn-spinner');
+    const loginErrorEl  = document.getElementById('login-error');
+    const subBanner     = document.getElementById('sub-alert-banner');
+    const subMsg        = document.getElementById('sub-alert-msg');
+    const subLink       = document.getElementById('sub-alert-link');
+
+    function showLoginError(msg) {
+        loginErrorEl.textContent = msg;
+        loginErrorEl.style.display = 'block';
+    }
+
+    function hideLoginOverlay() {
+        loginOverlay.classList.add('hidden');
+        setTimeout(() => loginOverlay.style.display = 'none', 450);
+    }
+
+    async function attemptLogin() {
+        const email    = loginEmail.value.trim();
+        const password = loginPassword.value;
+        if (!email || !password) return showLoginError('Please enter your email and password.');
+
+        loginErrorEl.style.display = 'none';
+        loginSubmit.disabled = true;
+        loginBtnText.style.display = 'none';
+        loginSpinner.style.display = 'inline';
+
+        const result = await window.electronAPI.loginUser(email, password);
+
+        loginSubmit.disabled = false;
+        loginBtnText.style.display = 'inline';
+        loginSpinner.style.display = 'none';
+
+        if (!result.success) {
+            showLoginError(result.message || 'Login failed. Check your credentials.');
+            return;
+        }
+
+        hideLoginOverlay();
+        appendLog(`[AUTH] ✅ Logged in as ${email}\n`, 'success');
+
+        // Check subscription message
+        const sub = result.user?.subscription;
+        if (sub && sub.message) {
+            subMsg.textContent = sub.message;
+            subBanner.style.display = 'flex';
+            if (sub.status === 'expired') {
+                subBanner.classList.add('expired');
+                subLink.style.display = 'inline';
+            }
+        }
+
+        // Auto-start the protection engine after login
+        appendLog('[AUTH] Starting protection engine...\n', 'info');
+        const engineRes = await window.electronAPI.startBackend();
+        if (engineRes.success) {
+            updateUI(true);
+            appendLog('--- NetSentinel Engine Initialized ---\n', 'success');
+        } else {
+            appendLog(`[ERROR] Failed to start engine: ${engineRes.message}\n`, 'error');
+        }
+    }
+
+    // Handle Enter key 
+    loginPassword.addEventListener('keydown', (e) => { if (e.key === 'Enter') attemptLogin(); });
+    loginSubmit.addEventListener('click', attemptLogin);
+
+    // Handle session conflict — another device logged in
+    window.electronAPI.onSessionConflict(() => {
+        loginOverlay.style.display = 'flex';
+        loginOverlay.classList.remove('hidden');
+        showLoginError('⚠ You have been logged out because your account was used on another device.');
+        appendLog('[AUTH] ⚠ Session conflict — logged out remotely.\n', 'error');
+    });
+
+    // Handle subscription alerts from main process
+    window.electronAPI.onSubscriptionAlert((data) => {
+        subMsg.textContent = data.message || '';
+        subBanner.style.display = 'flex';
+        if (data.type === 'expired') {
+            subBanner.classList.add('expired');
+            subLink.style.display = 'inline';
+        }
+    });
+
+    // Check if we already have a saved session (auto-login on restart)
+    const sub = await window.electronAPI.getSubscription();
+    if (sub && sub.status !== 'expired') {
+        // Already logged in — skip login screen
+        hideLoginOverlay();
+        if (sub.message) { subMsg.textContent = sub.message; subBanner.style.display = 'flex'; }
+        appendLog('[AUTH] ✅ Session restored. Starting engine...\n', 'success');
+        const engineRes = await window.electronAPI.startBackend();
+        if (engineRes.success) { updateUI(true); appendLog('--- NetSentinel Engine Initialized ---\n', 'success'); }
+    }
+    // else: login overlay stays visible
+
     // ── DOM refs ────────────────────────────────────────────────────────────
+
     const startBtn    = document.getElementById('start-btn');
     const stopBtn     = document.getElementById('stop-btn');
     const clearBtn    = document.getElementById('clear-btn');

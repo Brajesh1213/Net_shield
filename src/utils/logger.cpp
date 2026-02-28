@@ -13,12 +13,7 @@
 namespace NetSentinel {
 namespace {
 bool SafeLocalTime(std::tm& out, const std::time_t& in) {
-    std::tm* tmp = std::localtime(&in);
-    if (!tmp) {
-        return false;
-    }
-    out = *tmp;
-    return true;
+    return localtime_s(&out, &in) == 0;
 }
 } // namespace
 

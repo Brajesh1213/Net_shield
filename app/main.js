@@ -4,11 +4,104 @@ const { spawn, execSync, execFile } = require('child_process');
 const http  = require('http');
 const https = require('https');
 
+const API_BASE = 'http://localhost:5000/api';
+
 let mainWindow;
 let tray = null;
 let backendProcess = null;
 let isQuitting = false;
 let isAdmin = false;
+
+// ── Auth session state (stored in memory, persisted in electron-store or a simple file)
+let authSession = { token: null, sessionToken: null, hwid: null, email: null };
+
+// Load saved session from disk on start
+try {
+    const fs = require('fs');
+    const sessionPath = path.join(app.getPath('userData'), 'session.json');
+    if (fs.existsSync(sessionPath)) {
+        authSession = JSON.parse(fs.readFileSync(sessionPath, 'utf8'));
+    }
+} catch {}
+
+const saveSession = () => {
+    try {
+        const fs = require('fs');
+        const sessionPath = path.join(app.getPath('userData'), 'session.json');
+        fs.writeFileSync(sessionPath, JSON.stringify(authSession), 'utf8');
+    } catch {}
+};
+
+const clearSession = () => {
+    authSession = { token: null, sessionToken: null, hwid: null, email: null };
+    saveSession();
+};
+
+// ── Generate a stable HWID from machine info
+const getHWID = () => {
+    try {
+        const os = require('os');
+        const crypto = require('crypto');
+        const raw = `${os.hostname()}-${os.platform()}-${os.arch()}-${os.cpus()[0]?.model}`;
+        return crypto.createHash('sha256').update(raw).digest('hex').substring(0, 32);
+    } catch { return 'unknown-hwid'; }
+};
+
+// ── Subscription check (polls the backend) ───────────────────────────────────
+let subscriptionPollTimer = null;
+
+const checkSubscription = async () => {
+    if (!authSession.sessionToken || !authSession.hwid) return null;
+    try {
+        const res = await fetch(`${API_BASE}/agent/subscription`, {
+            headers: {
+                'X-Session-Token': authSession.sessionToken,
+                'X-HWID': authSession.hwid,
+            },
+        });
+
+        // Session conflict: another device logged in
+        if (res.status === 409) {
+            clearSession();
+            if (mainWindow) mainWindow.webContents.send('session-conflict');
+            if (subscriptionPollTimer) clearInterval(subscriptionPollTimer);
+            return null;
+        }
+
+        if (!res.ok) return null;
+        const data = await res.json();
+
+        // Notify user if subscription is expired or about to expire
+        if (data.subscription?.status === 'expired') {
+            const msg = data.subscription.message || 'Your subscription has expired.';
+            if (mainWindow) mainWindow.webContents.send('subscription-alert', { type: 'expired', message: msg });
+            if (Notification.isSupported()) {
+                new Notification({
+                    title: '⚠️ NetSentinel — Action Required',
+                    body: msg,
+                }).show();
+            }
+        } else if (data.subscription?.status === 'beta') {
+            // Only show a warning when < 7 days left
+            const msg = data.subscription.message || '';
+            const daysLeft = parseInt(msg.match(/(\d+) days/)?.[1]) || 999;
+            if (daysLeft <= 7 && mainWindow) {
+                mainWindow.webContents.send('subscription-alert', { type: 'warning', message: msg });
+            }
+        }
+
+        return data.subscription;
+    } catch { return null; }
+};
+
+const startSubscriptionPolling = () => {
+    if (subscriptionPollTimer) clearInterval(subscriptionPollTimer);
+    checkSubscription(); // immediate first check
+    subscriptionPollTimer = setInterval(checkSubscription, 30 * 60 * 1000); // every 30 min
+};
+
+
+
 
 // ─── Admin Check ─────────────────────────────────────────────────────────────
 function checkAdmin() {
@@ -121,8 +214,65 @@ app.on('before-quit', () => {
     if (backendProcess) backendProcess.kill();
 });
 
+// ─── IPC: Auth ────────────────────────────────────────────────────────────────
+ipcMain.handle('auth-login', async (_, email, password) => {
+    try {
+        const hwid = getHWID();
+        const os   = require('os');
+        // 1. Login to get session_token
+        const res  = await fetch(`${API_BASE}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) return { success: false, message: data.message || 'Login failed' };
+
+        authSession = { token: data.token, sessionToken: data.session_token, hwid, email };
+        saveSession();
+
+        // 2. Activate this device (binds HWID to session)
+        await fetch(`${API_BASE}/agent/activate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_token: data.session_token,
+                hwid,
+                hostname:    os.hostname(),
+                os_version:  `${os.type()} ${os.release()}`,
+                app_version: '1.0.0-beta',
+            }),
+        });
+
+        // 3. Start subscription polling
+        startSubscriptionPolling();
+
+        return { success: true, user: data.user };
+    } catch (err) {
+        return { success: false, message: err.message };
+    }
+});
+
+ipcMain.handle('auth-logout', async () => {
+    try {
+        if (authSession.token) {
+            await fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${authSession.token}` },
+            });
+        }
+    } catch {}
+    clearSession();
+    return { success: true };
+});
+
+ipcMain.handle('auth-get-subscription', async () => {
+    return await checkSubscription();
+});
+
 // ─── IPC: Admin ───────────────────────────────────────────────────────────────
 ipcMain.handle('check-admin', () => isAdmin);
+
 
 ipcMain.handle('restart-as-admin', () => {
     // Build the command: in dev mode pass app dir as argument to electron.exe
