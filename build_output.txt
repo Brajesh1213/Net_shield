@@ -1,0 +1,2 @@
+﻿[ 92%] Built target Asthak
+[100%] Built target Asthak_Hook

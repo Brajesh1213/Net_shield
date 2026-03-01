@@ -24,15 +24,19 @@ if(WIN32)
         src/network/tcp_table.cpp
         src/network/udp_table.cpp
         src/network/packet_capture.cpp
+        src/network/wfp_manager.cpp
         src/risk/risk_assessment.cpp
         src/risk/threat_intel.cpp
         src/risk/hash_scanner.cpp
         src/risk/pe_analyzer.cpp
         src/risk/dns_analyzer.cpp
+        src/risk/vt_lookup.cpp
         src/safety/kill_switch.cpp
         src/safety/firewall_blocker.cpp
         src/safety/self_protection.cpp
         src/safety/ransomware_guard.cpp
+        src/safety/response_engine.cpp
+        src/safety/quarantine.cpp
         src/telemetry/etw_consumer.cpp
         src/utils/logger.cpp
         src/utils/process_verification.cpp
@@ -67,6 +71,8 @@ if(WIN32)
         wbemuuid      # WMI (for real-time process events)
         tdh           # Trace Data Helper (for ETW event parsing)
         bcrypt        # SHA-256 hashing (CNG API)
+        wininet       # WinINet (for VirusTotal API HTTPS requests)
+        fwpuclnt      # Windows Filtering Platform (WFP)
     )
 
     # YARA Engine configuration
