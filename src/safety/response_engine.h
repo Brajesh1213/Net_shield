@@ -57,6 +57,12 @@ public:
     void SetCallback(IncidentCallback callback) { m_callback = callback; }
 
     void HandleThreat(ThreatIncident incident);
+    // Hash-based process launch blocking
+    // Called by ETW/process monitor when a new process starts.
+    // Scans the process EXE against hash blocklist + VT.
+    // If malicious: kills the process immediately (< 500ms from launch).
+    void ScanAndBlockOnLaunch(DWORD pid, const std::wstring& processPath,
+                              const std::wstring& processName);
 
     bool KillProcess(DWORD pid, const std::wstring& reason);
     bool QuarantineFile(const std::wstring& filePath, const std::wstring& reason);

@@ -18,6 +18,8 @@
 #include "safety/response_engine.h"
 #include "safety/quarantine.h"
 #include "safety/firewall_blocker.h"
+#include "risk/hash_scanner.h"
+#include "risk/vt_lookup.h"
 #include "utils/logger.h"
 #include <shlobj.h>
 #include <tlhelp32.h>
@@ -329,6 +331,88 @@ bool ResponseEngine::BlockDomain(const std::wstring& domain) {
     Logger::Instance().Info(L"[ResponseEngine] Domain block requested: " + domain);
     m_blocked.fetch_add(1);
     return true;
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HASH-BASED PROCESS LAUNCH BLOCKING
+// Called immediately when a new process is created (from ETW IMAGE_LOAD event)
+// This is the closest to "pre-execution" blocking we can do in user-mode.
+// ═══════════════════════════════════════════════════════════════════════════
+
+void ResponseEngine::ScanAndBlockOnLaunch(DWORD pid,
+                                          const std::wstring& processPath,
+                                          const std::wstring& processName) {
+    if (processPath.empty() || pid == 0) return;
+
+    // Ignore system / our own process
+    if (pid == GetCurrentProcessId() || pid == 4) return;
+
+    // Ignore known-safe system directories (fast path)
+    std::wstring lower = processPath;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
+    if (lower.find(L"\\windows\\system32\\")  != std::wstring::npos ||
+        lower.find(L"\\windows\\syswow64\\")  != std::wstring::npos ||
+        lower.find(L"\\windows\\explorer.exe") != std::wstring::npos) {
+        return;
+    }
+
+    // ── Step 1: Synchronous local hash check (< 5ms) ──────────────────────
+    HashResult hr = HashScanner::Instance().ScanFile(processPath);
+
+    if (hr.verdict == HashVerdict::KNOWN_MALWARE) {
+        Logger::Instance().Critical(
+            L"[ResponseEngine] HASH MATCH on launch! Process=" + processName +
+            L" PID=" + ToWStr(pid) +
+            L" Family=" + hr.malwareFamily +
+            L" Hash=" + hr.sha256);
+
+        ThreatIncident inc;
+        inc.source          = ThreatSource::HASH_SCANNER;
+        inc.action          = ResponseAction::FULL_RESPONSE;
+        inc.pid             = pid;
+        inc.processName     = processName;
+        inc.processPath     = processPath;
+        inc.confidenceScore = 1.0;
+        inc.detail          = L"Known malware hash on launch: " + hr.malwareFamily;
+        HandleThreat(inc);
+        return; // No need to do VT lookup
+    }
+
+    // ── Step 2: Async VirusTotal check (non-blocking) ─────────────────────
+    // We don't wait for the result — but if VT comes back malicious, we kill
+    std::wstring sha256 = hr.sha256.empty() ?
+        HashScanner::Instance().ComputeSHA256(processPath) : hr.sha256;
+
+    if (!sha256.empty() && VtLookup::Instance().IsInitialized()) {
+        // Capture values for lambda (MinGW compatible)
+        struct VtAsyncArgs {
+            DWORD pid;
+            std::wstring processName;
+            std::wstring processPath;
+        };
+        auto* args = new VtAsyncArgs{ pid, processName, processPath };
+
+        VtLookup::Instance().LookupHashAsync(sha256,
+            [args](const std::wstring& hash, const VtResult& result) {
+                if (result.malicious) {
+                    Logger::Instance().Critical(
+                        L"[ResponseEngine] VT confirmed malware! " +
+                        args->processName + L" | " + result.detail);
+
+                    ThreatIncident inc;
+                    inc.source          = ThreatSource::HASH_SCANNER;
+                    inc.action          = ResponseAction::FULL_RESPONSE;
+                    inc.pid             = args->pid;
+                    inc.processName     = args->processName;
+                    inc.processPath     = args->processPath;
+                    inc.confidenceScore = 0.95;
+                    inc.detail          = L"VirusTotal confirmed: " + result.detail;
+                    ResponseEngine::Instance().HandleThreat(inc);
+                }
+                delete args;
+            });
+    }
 }
 
 } // namespace Asthak

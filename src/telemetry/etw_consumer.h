@@ -38,6 +38,7 @@ struct EtwEvent {
     EtwEventType type;
     DWORD        pid;
     std::wstring processName;
+    std::wstring processPath;   // Full path to EXE (set for PROCESS_CREATE, IMAGE_LOAD)
     std::wstring detail;        // domain / script block / command line / dll path / reg key
     std::wstring extra;         // resolved IP / parent PID / etc.
     LARGE_INTEGER timestamp;

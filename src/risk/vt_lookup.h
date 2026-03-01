@@ -40,7 +40,8 @@ public:
     void LookupHashAsync(const std::wstring& sha256Hash, VtResultCallback callback);
 
     // Check if we have an API key configured
-    bool HasApiKey() const { return !m_apiKey.empty(); }
+    bool HasApiKey()      const { return !m_apiKey.empty(); }
+    bool IsInitialized()  const { return m_initialized; }
 
     // Rate limiting
     bool CanMakeRequest() const;

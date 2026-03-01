@@ -19,6 +19,8 @@
 #include <sstream>
 #include <cwctype>
 #include <cmath>
+#include <fstream>
+#include <vector>
 
 namespace Asthak {
 
@@ -241,35 +243,157 @@ bool RansomwareGuard::IsRansomwarePattern(const ProcessActivity& activity) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 bool RansomwareGuard::CreateSnapshot() {
-    // Execute vssadmin to create a shadow copy
-    // This requires admin privileges
+    // Use vssadmin to create a shadow copy (requires admin)
     STARTUPINFOW si = {};
     PROCESS_INFORMATION pi = {};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESHOWWINDOW;
     si.wShowWindow = SW_HIDE;
-    
+
     WCHAR cmd[] = L"vssadmin create shadow /for=C:";
-    
     BOOL success = CreateProcessW(nullptr, cmd, nullptr, nullptr, FALSE,
                                    CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi);
     if (success) {
         WaitForSingleObject(pi.hProcess, 30000);
+        DWORD exitCode = 0;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
-        Logger::Instance().Info(L"[RansomGuard] VSS snapshot created for C:");
-        return true;
+        if (exitCode == 0) {
+            Logger::Instance().Info(L"[RansomGuard] VSS snapshot created for C:");
+            return true;
+        }
     }
-    
     Logger::Instance().Warning(L"[RansomGuard] Failed to create VSS snapshot (needs admin)");
     return false;
 }
 
+// RestoreFromSnapshot — Full VSS rollback implementation
+// Steps:
+//   1. Run "vssadmin list shadows" and parse output to find latest shadow copy device path
+//   2. Construct the shadow path: \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN\<relative path>
+//   3. CopyFile from shadow path → original target path (overwrites encrypted file)
 bool RansomwareGuard::RestoreFromSnapshot(const std::wstring& targetPath) {
-    // In production: enumerate shadow copies via COM (IVssBackupComponents)
-    // and restore specific files. For now, log the intent.
-    Logger::Instance().Info(L"[RansomGuard] Restore requested for: " + targetPath);
-    return false; // TODO: implement full VSS restore via COM
+    if (targetPath.empty()) return false;
+
+    Logger::Instance().Info(L"[RansomGuard] VSS restore requested for: " + targetPath);
+
+    // ── Step 1: Run vssadmin list shadows and capture output ───────────────
+    // We pipe stdout to a temp file then read it
+    WCHAR tempDir[MAX_PATH] = {};
+    WCHAR tempFile[MAX_PATH] = {};
+    GetTempPathW(MAX_PATH, tempDir);
+    GetTempFileNameW(tempDir, L"vss", 0, tempFile);
+
+    std::wstring cmdLine = L"cmd.exe /c vssadmin list shadows /for=C: > \"" +
+                           std::wstring(tempFile) + L"\" 2>&1";
+
+    STARTUPINFOW si = {};
+    PROCESS_INFORMATION pi = {};
+    si.cb = sizeof(si);
+    si.dwFlags = STARTF_USESHOWWINDOW;
+    si.wShowWindow = SW_HIDE;
+
+    std::vector<WCHAR> cmdBuf(cmdLine.begin(), cmdLine.end());
+    cmdBuf.push_back(L'\0');
+
+    if (!CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, FALSE,
+                        CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
+        Logger::Instance().Warning(L"[RansomGuard] Could not run vssadmin list shadows");
+        return false;
+    }
+    WaitForSingleObject(pi.hProcess, 15000);
+    CloseHandle(pi.hProcess);
+    CloseHandle(pi.hThread);
+
+    // ── Step 2: Parse output to find the latest shadow copy device ─────────
+    // vssadmin output example:
+    //   Shadow Copy Volume: \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy3
+    std::wstring shadowDevice;
+    {
+        // Read temp file as narrow then convert
+        std::string narrowPath;
+        int sz = WideCharToMultiByte(CP_ACP, 0, tempFile, -1, nullptr, 0, nullptr, nullptr);
+        narrowPath.resize(sz - 1);
+        WideCharToMultiByte(CP_ACP, 0, tempFile, -1, &narrowPath[0], sz, nullptr, nullptr);
+
+        std::ifstream f(narrowPath);
+        if (f.is_open()) {
+            std::string line;
+            std::string lastDevice;
+            while (std::getline(f, line)) {
+                // Look for "Shadow Copy Volume:" line
+                auto pos = line.find("Shadow Copy Volume:");
+                if (pos != std::string::npos) {
+                    auto start = line.find("\\\\?\\", pos);
+                    if (start != std::string::npos) {
+                        lastDevice = line.substr(start);
+                        // Trim trailing whitespace / \r
+                        while (!lastDevice.empty() &&
+                               (lastDevice.back() == '\r' || lastDevice.back() == '\n' ||
+                                lastDevice.back() == ' ')) {
+                            lastDevice.pop_back();
+                        }
+                    }
+                }
+            }
+            if (!lastDevice.empty()) {
+                // Convert to wide
+                int wsz = MultiByteToWideChar(CP_ACP, 0, lastDevice.c_str(), -1, nullptr, 0);
+                shadowDevice.resize(wsz - 1);
+                MultiByteToWideChar(CP_ACP, 0, lastDevice.c_str(), -1, &shadowDevice[0], wsz);
+            }
+        }
+        DeleteFileW(tempFile);
+    }
+
+    if (shadowDevice.empty()) {
+        Logger::Instance().Warning(L"[RansomGuard] No VSS shadow copies found for C:");
+        return false;
+    }
+
+    // ── Step 3: Build shadow path for the target file ──────────────────────
+    // targetPath example: C:\Users\Bob\Documents\report.docx
+    // We strip "C:" → get "\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN\Users\Bob\Documents\report.docx"
+    std::wstring relativePath = targetPath;
+    if (relativePath.size() >= 2 && relativePath[1] == L':') {
+        relativePath = relativePath.substr(2); // strip drive letter + colon
+    }
+    // Ensure backslash separator
+    if (!relativePath.empty() && relativePath[0] != L'\\') relativePath = L"\\" + relativePath;
+
+    // Shadow path uses the device path directly (no trailing backslash on device)
+    std::wstring shadowPath = shadowDevice + relativePath;
+
+    Logger::Instance().Info(L"[RansomGuard] Shadow source: " + shadowPath);
+    Logger::Instance().Info(L"[RansomGuard] Restore target: " + targetPath);
+
+    // ── Step 4: Copy from shadow → original (restores the pre-encryption file)
+    if (CopyFileW(shadowPath.c_str(), targetPath.c_str(), FALSE /*overwrite*/)) {
+        Logger::Instance().Info(L"[RansomGuard] SUCCESS: Restored " + targetPath +
+                                L" from VSS snapshot");
+        return true;
+    }
+
+    DWORD err = GetLastError();
+    Logger::Instance().Warning(L"[RansomGuard] CopyFile from shadow failed. Error=" +
+                               ToWStr(err) + L" | Shadow=" + shadowPath);
+    return false;
+}
+
+// Restore all recently encrypted files in the activity list for a given PID
+void RansomwareGuard::RollbackProcess(DWORD pid) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    auto it = m_processActivity.find(pid);
+    if (it == m_processActivity.end()) return;
+
+    const auto& files = it->second.recentFiles;
+    int restored = 0;
+    for (const auto& f : files) {
+        if (RestoreFromSnapshot(f)) restored++;
+    }
+    Logger::Instance().Info(L"[RansomGuard] Rollback complete: " + ToWStr(restored) +
+                            L"/" + ToWStr(files.size()) + L" files restored from VSS");
 }
 
 } // namespace Asthak

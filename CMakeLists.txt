@@ -37,6 +37,7 @@ if(WIN32)
         src/safety/ransomware_guard.cpp
         src/safety/response_engine.cpp
         src/safety/quarantine.cpp
+        src/safety/amsi_scanner.cpp
         src/telemetry/etw_consumer.cpp
         src/utils/logger.cpp
         src/utils/process_verification.cpp
@@ -76,14 +77,22 @@ if(WIN32)
     )
 
     # YARA Engine configuration
-    option(USE_YARA "Enable YARA engine for packet scanning" OFF)
+    # YARA is the industry-standard malware pattern matching engine.
+    # To enable: download yara from https://github.com/VirusTotal/yara
+    #   1. Build yara for MinGW: ./configure && make
+    #   2. Copy libyara.a to rp/lib/
+    #   3. Copy yara/*.h to rp/include/yara/
+    # Re-run cmake with -DUSE_YARA=ON or toggle it here:
+    option(USE_YARA "Enable YARA engine for malware pattern matching" OFF)
     if(USE_YARA)
         message(STATUS "YARA Engine is ENABLED")
         add_definitions(-DUSE_YARA)
-        # Ensure yara headers are in include/ and yara library in lib/
         target_include_directories(Asthak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
         target_link_directories(Asthak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/lib)
-        target_link_libraries(Asthak PRIVATE yara)
+        target_link_libraries(Asthak PRIVATE yara crypto)
+        message(STATUS "YARA: link yara + crypto from lib/")
+    else()
+        message(STATUS "YARA Engine is DISABLED (build with -DUSE_YARA=ON to enable)")
     endif()
     
     # Enable optimizations (MinGW/GCC compatible flags)

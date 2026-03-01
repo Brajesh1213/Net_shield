@@ -28,6 +28,7 @@
 #include "src/safety/self_protection.h"
 #include "src/safety/ransomware_guard.h"
 #include "src/safety/response_engine.h"
+#include "src/safety/amsi_scanner.h"
 #include "src/telemetry/etw_consumer.h"
 #include "src/utils/logger.h"
 #include "src/core/process_cache.h"
@@ -256,8 +257,23 @@ int main() {
         incident.detail = alert.detail;
         incident.confidenceScore = 0.95;
         responseEngine.HandleThreat(incident);
+
+        // VSS ROLLBACK: Restore encrypted files from shadow copy
+        RansomwareGuard::Instance().RollbackProcess(alert.pid);
     });
-    std::cout << "[OK] Ransomware guard active (mass encryption detection + auto-kill)\n" << std::flush;
+    std::cout << "[OK] Ransomware guard active (mass encryption detection + auto-kill + VSS rollback)\n" << std::flush;
+    
+    // ── Initialize AMSI (PowerShell/Script malware scanning) ─────────────────
+    AmsiScanner& amsiScanner = AmsiScanner::Instance();
+    if (amsiScanner.Initialize(L"Asthak")) {
+        amsiScanner.SetCallback([](const AmsiAlert& alert) {
+            std::cout << "\n\033[91;1m[AMSI] Malicious script blocked: " 
+                      << WStr(alert.malwareName) << "\033[0m\n" << std::flush;
+        });
+        std::cout << "[OK] AMSI integration active (PowerShell/VBScript/JScript pre-execution scan)\n" << std::flush;
+    } else {
+        std::cout << "[INFO] AMSI not available (Windows 10 1511+ required)\n" << std::flush;
+    }
     
     // ── Enable Self-Protection ───────────────────────────────────────────────
     SelfProtection& selfProtect = SelfProtection::Instance();
@@ -337,6 +353,11 @@ int main() {
                     reason = L"AMSI bypass attempt detected";
                     confidence = 0.85;
                 }
+                // AMSI: scan PS script content through Windows Antimalware API
+                if (AmsiScanner::Instance().IsAvailable()) {
+                    AmsiScanner::Instance().ScanEtwPowerShellScript(evt.detail, evt.pid, evt.processName);
+                }
+
                 if (suspicious) {
                     std::string msg = "[ETW:PS] Suspicious PowerShell: " + WStr(reason);
                     std::cout << "\n\033[91m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
@@ -357,6 +378,18 @@ int main() {
             case EtwEventType::PROCESS_CREATE: {
                 if (!evt.detail.empty()) {
                     Logger::Instance().Info(L"[ETW:PROC] New process: " + evt.processName + L" | CMD: " + evt.detail);
+                }
+                // HASH BLOCKING: Scan every new process EXE against local blocklist + VirusTotal
+                // processPath has the EXE path; if not set, use detail (which has cmdline/path)
+                std::wstring exePath = evt.processPath.empty() ? evt.detail : evt.processPath;
+                // Trim command-line arguments — take only up to first space if it starts with a path
+                if (!exePath.empty() && exePath[0] != L'"') {
+                    auto spacePos = exePath.find(L' ');
+                    if (spacePos != std::wstring::npos) exePath = exePath.substr(0, spacePos);
+                }
+                if (!exePath.empty()) {
+                    ResponseEngine::Instance().ScanAndBlockOnLaunch(
+                        evt.pid, exePath, evt.processName);
                 }
                 break;
             }

@@ -8,6 +8,7 @@
 #include <atomic>
 #include <unordered_map>
 #include <mutex>
+#include <fstream>
 #include <vector>
 
 namespace Asthak {
@@ -36,6 +37,7 @@ public:
     // VSS snapshot management
     bool CreateSnapshot();
     bool RestoreFromSnapshot(const std::wstring& targetPath);
+    void RollbackProcess(DWORD pid);  // Restore all files encrypted by a PID
 
     // Stats
     uint64_t GetEventsProcessed() const { return m_eventsProcessed.load(); }
