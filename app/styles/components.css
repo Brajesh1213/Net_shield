@@ -697,6 +697,210 @@
     background: var(--teal-light);
 }
 
+/* ── TOAST NOTIFICATIONS ────────────────────────────────────────────────── */
+#toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 99999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    min-width: 300px;
+    max-width: 400px;
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .14), 0 2px 8px rgba(0, 0, 0, .08);
+    padding: 14px 14px 18px;
+    border-left-width: 4px;
+    position: relative;
+    overflow: hidden;
+    pointer-events: all;
+    /* start invisible (enter animation applied via JS) */
+    opacity: 0;
+    transform: translateX(40px);
+}
+
+/* Enter / Exit */
+.toast-in {
+    animation: toast-slide-in .28s cubic-bezier(.22, 1, .36, 1) forwards;
+}
+
+.toast-out {
+    animation: toast-slide-out .22s ease-in forwards;
+}
+
+@keyframes toast-slide-in {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes toast-slide-out {
+    to {
+        opacity: 0;
+        transform: translateX(48px);
+    }
+}
+
+/* Type colours */
+.toast-warn {
+    border-left-color: var(--orange);
+}
+
+.toast-error {
+    border-left-color: var(--red);
+}
+
+.toast-success {
+    border-left-color: var(--green);
+}
+
+.toast-info {
+    border-left-color: var(--teal);
+}
+
+.toast-icon {
+    flex-shrink: 0;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.toast-warn .toast-icon {
+    background: var(--orange-light);
+    color: var(--orange);
+}
+
+.toast-error .toast-icon {
+    background: var(--red-light);
+    color: var(--red);
+}
+
+.toast-success .toast-icon {
+    background: var(--green-light);
+    color: var(--green);
+}
+
+.toast-info .toast-icon {
+    background: var(--teal-light);
+    color: var(--teal);
+}
+
+.toast-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.toast-msg {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.45;
+}
+
+.toast-action-wrap {
+    margin-top: 8px;
+}
+
+.toast-action-link {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--teal);
+    text-decoration: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    transition: opacity .15s;
+}
+
+.toast-action-link:hover {
+    opacity: .75;
+    text-decoration: underline;
+}
+
+.toast-close {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background .12s, color .12s;
+    padding: 0;
+}
+
+.toast-close:hover {
+    background: var(--border-light);
+    color: var(--text);
+}
+
+/* Progress bar (shrinks left to right over the duration) */
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    width: 100%;
+    background: rgba(0, 0, 0, .06);
+    transform-origin: left;
+}
+
+.toast-progress-run {
+    animation: toast-progress-shrink linear forwards;
+}
+
+@keyframes toast-progress-shrink {
+    from {
+        transform: scaleX(1);
+    }
+
+    to {
+        transform: scaleX(0);
+    }
+}
+
+.toast-warn .toast-progress-run {
+    background: var(--orange);
+    opacity: .35;
+}
+
+.toast-error .toast-progress-run {
+    background: var(--red);
+    opacity: .35;
+}
+
+.toast-success .toast-progress-run {
+    background: var(--green);
+    opacity: .35;
+}
+
+.toast-info .toast-progress-run {
+    background: var(--teal);
+    opacity: .35;
+}
+
 /* ── NETWORK TABLE CELLS ────────────────────────────────────────────────── */
 .net-established {
     color: var(--green);

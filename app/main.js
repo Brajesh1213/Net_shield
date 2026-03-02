@@ -158,10 +158,14 @@ function createWindow() {
         height: 750,
         minWidth: 800,
         minHeight: 600,
+        icon: path.join(__dirname, 'icon.png'),    // ← your icon in taskbar & Alt+Tab
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
             nodeIntegration: false,
-            contextIsolation: true
+            contextIsolation: true,
+            devTools: !app.isPackaged,  
+            
+                       // ← DevTools off in production
         },
         frame: true,
         show: false
@@ -175,6 +179,13 @@ function createWindow() {
         mainWindow.webContents.send('admin-status', isAdmin);
         // No auto-popup — user can click "Run as Admin" button in the UI
     });
+
+    // Extra safety in packaged build: close DevTools if somehow opened
+    if (app.isPackaged) {
+        mainWindow.webContents.on('devtools-opened', () => {
+            mainWindow.webContents.closeDevTools();
+        });
+    }
 
     mainWindow.on('close', (event) => {
         if (!isQuitting) {

@@ -45,15 +45,27 @@ export async function loadProfile() {
 }
 
 /**
- * Show or hide the subscription warning banner.
- * @param {{ message?: string, status?: string }} sub
+ * Show or hide the subscription warning banner, AND persist status to state.
+ * This is the central place where subscriptionStatus is kept in sync.
+ * @param {{ message?: string, status?: string, type?: string }} sub
  */
 export function handleSubscription(sub) {
-    if (!sub || !sub.message) return;
+    if (!sub) return;
+
+    // ── Persist to global state (engine gate reads this) ─────────────────
+    if (sub.status) {
+        state.subscriptionStatus = sub.status;   // 'active' | 'beta' | 'expired'
+    }
+
+    // ── Show banner only when there is a message ──────────────────────────
+    if (!sub.message) return;
+
     const banner = document.getElementById('sub-banner');
     const msg    = document.getElementById('sub-banner-msg');
     const link   = document.getElementById('sub-banner-link');
     msg.textContent = sub.message;
     banner.style.display = 'flex';
-    if (sub.status === 'expired') link.style.display = 'inline';
+    if (sub.status === 'expired' || sub.type === 'expired') {
+        link.style.display = 'inline';
+    }
 }

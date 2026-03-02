@@ -43,17 +43,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // ── Auto-login (restore saved session) ───────────────────────────────
     const sub = await window.electronAPI.getSubscription();
-    if (sub && sub.status !== 'expired') {
-        hideOverlay();
-        handleSubscription(sub);
-        appendLog('[AUTH] ✅ Session restored.\n', 'success');
 
-        const eng = await window.electronAPI.startBackend();
-        if (eng.success) {
-            setEngineRunning(true);
-            appendLog('--- Asthak Engine Initialized ---\n', 'success');
+    if (sub) {
+        // Always persist the subscription status to state first
+        // so engine.js can gate engine start properly
+        handleSubscription(sub);
+
+        if (sub.status === 'expired') {
+            // Keep login overlay visible — don't auto-restore expired sessions
+            appendLog('[AUTH] ⚠ Saved session found but subscription is expired.\n', 'warn');
+        } else {
+            // Valid session — restore and auto-start engine
+            hideOverlay();
+            appendLog('[AUTH] ✅ Session restored.\n', 'success');
+
+            const eng = await window.electronAPI.startBackend();
+            if (eng.success) {
+                setEngineRunning(true);
+                appendLog('--- Asthak Engine Initialized ---\n', 'success');
+            }
+            loadProfile();
         }
-        loadProfile();
     }
 
     // ── Sync current engine running state ────────────────────────────────

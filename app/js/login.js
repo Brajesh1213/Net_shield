@@ -56,15 +56,23 @@ export function initLogin() {
         state.userEmail = email;
         hideOverlay();
         appendLog(`[AUTH] ✅ Logged in as ${email}\n`, 'success');
+
+        // handleSubscription stores the status in state.subscriptionStatus
+        // so the engine gate in engine.js already knows the plan
         handleSubscription(result.user?.subscription);
 
-        appendLog('[AUTH] Starting protection engine…\n', 'info');
-        const eng = await window.electronAPI.startBackend();
-        if (eng.success) {
-            setEngineRunning(true);
-            appendLog('--- Asthak Engine Initialized ---\n', 'success');
+        if (state.subscriptionStatus === 'expired') {
+            // Don't start engine; user will see the toast when they click ON
+            appendLog('[AUTH] ⚠ Subscription expired — engine blocked. Please upgrade.\n', 'warn');
         } else {
-            appendLog(`[ERROR] Engine start failed: ${eng.message}\n`, 'error');
+            appendLog('[AUTH] Starting protection engine…\n', 'info');
+            const eng = await window.electronAPI.startBackend();
+            if (eng.success) {
+                setEngineRunning(true);
+                appendLog('--- Asthak Engine Initialized ---\n', 'success');
+            } else {
+                appendLog(`[ERROR] Engine start failed: ${eng.message}\n`, 'error');
+            }
         }
 
         loadProfile();

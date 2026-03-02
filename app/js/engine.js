@@ -1,10 +1,13 @@
 /**
  * engine.js — Engine Toggle component (Protection page)
  * Handles the ON / TURN OFF toggle and updates all connected UI elements.
+ *
+ * Blocks engine start when subscription is expired and shows a toast.
  */
 
 import { state } from './state.js';
 import { appendLog } from './log.js';
+import { showToast } from './toast.js';
 
 /**
  * Wire up the engine Start/Stop toggle buttons.
@@ -14,6 +17,22 @@ export function initEngineToggle() {
     const stopBtn  = document.getElementById('stop-btn');
 
     startBtn.addEventListener('click', async () => {
+
+        // ── Subscription gate ─────────────────────────────────────────────
+        if (state.subscriptionStatus === 'expired') {
+            showToast(
+                'Your subscription has expired. Please upgrade to run the protection engine.',
+                'warn',
+                {
+                    label: 'Upgrade Now →',
+                    href:  'http://localhost:3000/pricing',
+                },
+                8000           // keep visible for 8 s
+            );
+            return;           // do NOT start the engine
+        }
+
+        // ── Normal start flow ─────────────────────────────────────────────
         startBtn.disabled = true;
         const res = await window.electronAPI.startBackend();
         if (res.success) {
