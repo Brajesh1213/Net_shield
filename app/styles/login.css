@@ -1,0 +1,182 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   LOGIN — Login Overlay & Subscription Banner
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── LOGIN OVERLAY ──────────────────────────────────────────────────────── */
+.login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    background: linear-gradient(135deg, #0d9fd8 0%, #005580 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity .4s ease;
+}
+
+.login-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.login-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 40px 36px 32px;
+    width: 380px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .28);
+    text-align: center;
+}
+
+.login-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+
+.login-brand-icon {
+    width: 32px;
+    height: 32px;
+}
+
+.login-brand-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.login-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.login-subtitle {
+    font-size: 12.5px;
+    color: var(--text-2);
+    margin: 4px 0 24px;
+}
+
+.login-error {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #991b1b;
+    border-radius: var(--radius-sm);
+    padding: 9px 12px;
+    font-size: 12px;
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.form-field {
+    margin-bottom: 14px;
+    text-align: left;
+}
+
+.form-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--text-2);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    outline: none;
+    font-family: inherit;
+    transition: border-color .15s, box-shadow .15s;
+}
+
+.form-input:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 3px rgba(13, 159, 216, .12);
+}
+
+.form-select {
+    padding: 6px 10px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 11px;
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background .15s;
+    font-family: inherit;
+}
+
+.login-btn:hover {
+    background: var(--teal-dark);
+}
+
+.login-btn:active {
+    transform: translateY(1px);
+}
+
+.login-footer {
+    font-size: 12px;
+    color: var(--text-3);
+    margin-top: 18px;
+}
+
+.login-footer a {
+    color: var(--teal);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.spinner-text {
+    font-style: italic;
+}
+
+/* ── SUBSCRIPTION BANNER ────────────────────────────────────────────────── */
+.sub-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 8000;
+    background: #fffbeb;
+    border-bottom: 1px solid #fcd34d;
+    padding: 7px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #92400e;
+}
+
+.sub-banner button {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    font-size: 14px;
+}
+
+.sub-banner a {
+    color: #92400e;
+    font-weight: 600;
+}

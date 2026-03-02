@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asthak — Network Security</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <!-- Modular CSS -->
+    <link rel="stylesheet" href="styles/index.css">
+    <!-- Chart.js (global, required by js/chart.js) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -133,7 +135,6 @@
                  PAGE: PROTECTION
                  ════════════════════════════════════════════════════════════ -->
             <section class="page active" id="page-protection">
-                <!-- Section title -->
                 <div class="page-header">
                     <h2 class="page-title">Protection Engine</h2>
                     <p class="page-desc">Control the real-time security monitoring engine</p>
@@ -494,6 +495,7 @@
     </div><!-- /body-wrap -->
 </div><!-- /app-shell -->
 
-<script src="renderer.js"></script>
+<!-- ES Module entry point -->
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
