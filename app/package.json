@@ -10,18 +10,29 @@
     "build": "electron-builder --win --x64",
     "build:dir": "electron-builder --dir"
   },
-  "keywords": ["security", "network", "monitor", "firewall"],
-  "dependencies": {},
+  "keywords": [
+    "security",
+    "network",
+    "monitor",
+    "firewall"
+  ],
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.13.3"
   },
   "build": {
     "appId": "com.asthak.app",
     "productName": "Asthak",
     "copyright": "Copyright © 2026 Asthak Team",
     "win": {
-      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "icon": "icon.ico",
       "requestedExecutionLevel": "requireAdministrator",
       "sign": null,

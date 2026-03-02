@@ -1,0 +1,64 @@
+[  3%] Building CXX object CMakeFiles/Asthak.dir/main.cpp.obj
+In file included from C:\Users\HP\Desktop\rp\main.cpp:31:
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:66:70: error: 'HAMSICONTEXT' has not been declared; did you mean 'PUMS_CONTEXT'?
+   66 |     using PFN_AmsiInitialize    = HRESULT (WINAPI*)(LPCWSTR appName, HAMSICONTEXT* amsiContext);
+      |                                                                      ^~~~~~~~~~~~
+      |                                                                      PUMS_CONTEXT
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:67:53: warning: 'stdcall' attribute only applies to function types [-Wattributes]
+   67 |     using PFN_AmsiUninitialize  = void    (WINAPI*)(HAMSICONTEXT amsiContext);
+      |                                                     ^~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:67:52: error: expected ';' before '(' token
+   67 |     using PFN_AmsiUninitialize  = void    (WINAPI*)(HAMSICONTEXT amsiContext);
+      |                                                    ^
+      |                                                    ;
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:68:53: warning: 'stdcall' attribute only applies to function types [-Wattributes]
+   68 |     using PFN_AmsiScanBuffer    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, PVOID buffer,
+      |                                                     ^~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:68:52: error: expected ';' before '(' token
+   68 |     using PFN_AmsiScanBuffer    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, PVOID buffer,
+      |                                                    ^
+      |                                                    ;
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:71:53: warning: 'stdcall' attribute only applies to function types [-Wattributes]
+   71 |     using PFN_AmsiScanString    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, LPCWSTR string,
+      |                                                     ^~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:71:52: error: expected ';' before '(' token
+   71 |     using PFN_AmsiScanString    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, LPCWSTR string,
+      |                                                    ^
+      |                                                    ;
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:74:53: warning: 'stdcall' attribute only applies to function types [-Wattributes]
+   74 |     using PFN_AmsiOpenSession   = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION* session);
+      |                                                     ^~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:74:52: error: expected ';' before '(' token
+   74 |     using PFN_AmsiOpenSession   = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION* session);
+      |                                                    ^
+      |                                                    ;
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:75:53: warning: 'stdcall' attribute only applies to function types [-Wattributes]
+   75 |     using PFN_AmsiCloseSession  = void    (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION session);
+      |                                                     ^~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:75:52: error: expected ';' before '(' token
+   75 |     using PFN_AmsiCloseSession  = void    (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION session);
+      |                                                    ^
+      |                                                    ;
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:78:5: error: 'HAMSICONTEXT' does not name a type; did you mean 'PUMS_CONTEXT'?
+   78 |     HAMSICONTEXT        m_amsiCtx{nullptr};
+      |     ^~~~~~~~~~~~
+      |     PUMS_CONTEXT
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:81:5: error: 'PFN_AmsiUninitialize' does not name a type; did you mean 'PFN_AmsiInitialize'?
+   81 |     PFN_AmsiUninitialize m_pfnUninit{nullptr};
+      |     ^~~~~~~~~~~~~~~~~~~~
+      |     PFN_AmsiInitialize
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:82:5: error: 'PFN_AmsiScanBuffer' does not name a type
+   82 |     PFN_AmsiScanBuffer   m_pfnScanBuf{nullptr};
+      |     ^~~~~~~~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:83:5: error: 'PFN_AmsiScanString' does not name a type
+   83 |     PFN_AmsiScanString   m_pfnScanStr{nullptr};
+      |     ^~~~~~~~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:84:5: error: 'PFN_AmsiOpenSession' does not name a type
+   84 |     PFN_AmsiOpenSession  m_pfnOpenSession{nullptr};
+      |     ^~~~~~~~~~~~~~~~~~~
+C:\Users\HP\Desktop\rp\src/safety/amsi_scanner.h:85:5: error: 'PFN_AmsiCloseSession' does not name a type
+   85 |     PFN_AmsiCloseSession m_pfnCloseSession{nullptr};
+      |     ^~~~~~~~~~~~~~~~~~~~
+mingw32-make[2]: *** [CMakeFiles\Asthak.dir\build.make:79: CMakeFiles/Asthak.dir/main.cpp.obj] Error 1
+mingw32-make[1]: *** [CMakeFiles\Makefile2:89: CMakeFiles/Asthak.dir/all] Error 2
+mingw32-make: *** [Makefile:90: all] Error 2

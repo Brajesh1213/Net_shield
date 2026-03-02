@@ -1,0 +1,42 @@
+[  3%] Building CXX object CMakeFiles/Asthak_Hook.dir/src/hooks/asthak_hook.cpp.obj
+[  6%] Building CXX object CMakeFiles/Asthak.dir/src/safety/self_protection.cpp.obj
+[  9%] Building CXX object CMakeFiles/Asthak.dir/src/safety/ransomware_guard.cpp.obj
+[ 12%] Building CXX object CMakeFiles/Asthak.dir/src/safety/response_engine.cpp.obj
+In file included from C:\Users\HP\Desktop\rp\src\safety\response_engine.cpp:24:
+C:/Users/HP/Desktop/rp/src/utils/false_positive_filter.h:19: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   19 | #pragma comment(lib, "wintrust.lib")
+C:/Users/HP/Desktop/rp/src/utils/false_positive_filter.h:20: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   20 | #pragma comment(lib, "crypt32.lib")
+C:\Users\HP\Desktop\rp\src\safety\self_protection.cpp:31: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   31 | #pragma comment(lib, "advapi32.lib")
+[ 15%] Linking CXX shared library libAsthak_Hook.dll
+[ 15%] Built target Asthak_Hook
+[ 18%] Building CXX object CMakeFiles/Asthak.dir/src/safety/quarantine.cpp.obj
+[ 21%] Building CXX object CMakeFiles/Asthak.dir/src/safety/amsi_scanner.cpp.obj
+[ 25%] Building CXX object CMakeFiles/Asthak.dir/src/telemetry/etw_consumer.cpp.obj
+[ 28%] Building CXX object CMakeFiles/Asthak.dir/src/utils/logger.cpp.obj
+C:\Users\HP\Desktop\rp\src\telemetry\etw_consumer.cpp:28: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   28 | #pragma comment(lib, "advapi32.lib")  // ETW APIs
+C:\Users\HP\Desktop\rp\src\telemetry\etw_consumer.cpp:29: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   29 | #pragma comment(lib, "tdh.lib")       // Trace Data Helper
+[ 31%] Building CXX object CMakeFiles/Asthak.dir/src/utils/process_verification.cpp.obj
+[ 34%] Building CXX object CMakeFiles/Asthak.dir/src/utils/string_utils.cpp.obj
+C:\Users\HP\Desktop\rp\src\telemetry\etw_consumer.cpp:62:14: warning: 'std::wstring Asthak::{anonymous}::GetStringProperty(PEVENT_RECORD, DWORD)' defined but not used [-Wunused-function]
+   62 | std::wstring GetStringProperty(PEVENT_RECORD pEvent, DWORD propertyIndex) {
+      |              ^~~~~~~~~~~~~~~~~
+[ 37%] Building CXX object CMakeFiles/Asthak.dir/src/utils/auto_updater.cpp.obj
+[ 40%] Building CXX object CMakeFiles/Asthak.dir/src/utils/false_positive_filter.cpp.obj
+C:\Users\HP\Desktop\rp\src\utils\auto_updater.cpp:11: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   11 | #pragma comment(lib, "wininet.lib")
+In file included from C:\Users\HP\Desktop\rp\src\utils\false_positive_filter.cpp:6:
+C:/Users/HP/Desktop/rp/src/utils/false_positive_filter.h:19: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   19 | #pragma comment(lib, "wintrust.lib")
+C:/Users/HP/Desktop/rp/src/utils/false_positive_filter.h:20: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   20 | #pragma comment(lib, "crypt32.lib")
+C:\Users\HP\Desktop\rp\src\utils\false_positive_filter.cpp:15: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   15 | #pragma comment(lib, "wintrust.lib")
+C:\Users\HP\Desktop\rp\src\utils\false_positive_filter.cpp:16: warning: ignoring '#pragma comment ' [-Wunknown-pragmas]
+   16 | #pragma comment(lib, "crypt32.lib")
+[ 43%] Linking CXX executable Asthak.exe
+[100%] Built target Asthak
+EXIT=0 

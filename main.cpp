@@ -29,8 +29,11 @@
 #include "src/safety/ransomware_guard.h"
 #include "src/safety/response_engine.h"
 #include "src/safety/amsi_scanner.h"
+#include "src/risk/yara_scanner.h"
 #include "src/telemetry/etw_consumer.h"
 #include "src/utils/logger.h"
+#include "src/utils/auto_updater.h"
+#include "src/utils/false_positive_filter.h"
 #include "src/core/process_cache.h"
 #include "src/monitor/file_monitor.h"
 #include "src/monitor/process_monitor.h"
@@ -240,6 +243,15 @@ int main() {
         std::cout << "\n  Detail: " << detail << "\n" << std::flush;
     });
     std::cout << "[OK] Response engine active (detect -> kill -> quarantine -> block)\n" << std::flush;
+
+    // ── Initialize False Positive Filter & Auto-Updater ─────────────────────
+    FalsePositiveFilter::Instance().Initialize();
+    AutoUpdater::Instance().Initialize("1.0.0", "https://updates.asthaksecurity.com", 24);
+    AutoUpdater::Instance().SetRulesUpdateCallback([](const std::string& /*rules*/) {
+        std::cout << "\n[UPDATER] New YARA rules downloaded. Reloading engine...\n" << std::flush;
+        YaraScanner::Instance().Initialize(); // Hot-reload rules
+    });
+    std::cout << "[OK] False positive filter active (Preventing alerts on system/signed files)\n" << std::flush;
     
     // ── Initialize Ransomware Guard ──────────────────────────────────────────
     RansomwareGuard& ransomGuard = RansomwareGuard::Instance();
@@ -274,6 +286,36 @@ int main() {
     } else {
         std::cout << "[INFO] AMSI not available (Windows 10 1511+ required)\n" << std::flush;
     }
+
+    // ── Initialize YARA Engine (built-in rules, no external library needed) ────
+    YaraScanner& yaraScanner = YaraScanner::Instance();
+    yaraScanner.Initialize();
+    yaraScanner.SetCallback([&responseEngine](const YaraMatch& match, DWORD pid) {
+        std::string severity;
+        ResponseAction action = ResponseAction::ALERT;
+        switch (match.severity) {
+            case YaraRuleSeverity::CRITICAL: severity = "\033[91;1mCRITICAL\033[0m"; action = ResponseAction::FULL_RESPONSE;  break;
+            case YaraRuleSeverity::HIGH:     severity = "\033[91mHIGH\033[0m";     action = ResponseAction::KILL_PROCESS;   break;
+            case YaraRuleSeverity::MEDIUM:   severity = "\033[93mMEDIUM\033[0m";   action = ResponseAction::ALERT;          break;
+            case YaraRuleSeverity::LOW:      severity = "\033[92mLOW\033[0m";      action = ResponseAction::LOG_ONLY;       break;
+        }
+        std::cout << "\n[YARA] " << severity
+                  << " | Rule: " << match.ruleName
+                  << " | Family: " << match.malwareFamily
+                  << " (PID: " << pid << ")" << std::flush;
+
+        ThreatIncident inc;
+        inc.source          = ThreatSource::YARA_SCANNER;
+        inc.action          = action;
+        inc.pid             = pid;
+        inc.detail          = std::wstring(match.ruleName.begin(), match.ruleName.end()) +
+                              L" — " +
+                              std::wstring(match.malwareFamily.begin(), match.malwareFamily.end());
+        inc.confidenceScore = (match.severity == YaraRuleSeverity::CRITICAL) ? 0.95 :
+                              (match.severity == YaraRuleSeverity::HIGH)     ? 0.80 : 0.60;
+        responseEngine.HandleThreat(inc);
+    });
+    std::cout << "[OK] YARA engine active (" << yaraScanner.RuleCount() << " built-in rules — no external library needed)\n" << std::flush;
     
     // ── Enable Self-Protection ───────────────────────────────────────────────
     SelfProtection& selfProtect = SelfProtection::Instance();
@@ -358,6 +400,11 @@ int main() {
                     AmsiScanner::Instance().ScanEtwPowerShellScript(evt.detail, evt.pid, evt.processName);
                 }
 
+                // YARA: scan script block content for known malware patterns
+                if (YaraScanner::Instance().IsReady() && !evt.detail.empty()) {
+                    YaraScanner::Instance().ScanWString(evt.detail, evt.pid);
+                }
+
                 if (suspicious) {
                     std::string msg = "[ETW:PS] Suspicious PowerShell: " + WStr(reason);
                     std::cout << "\n\033[91m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
@@ -390,22 +437,26 @@ int main() {
                 if (!exePath.empty()) {
                     ResponseEngine::Instance().ScanAndBlockOnLaunch(
                         evt.pid, exePath, evt.processName);
+                    // YARA: scan the EXE file on disk for malware patterns
+                    if (YaraScanner::Instance().IsReady()) {
+                        YaraScanner::Instance().ScanFile(exePath, evt.pid);
+                    }
                 }
                 break;
             }
             case EtwEventType::IMAGE_LOAD: {
                 std::wstring lower = evt.detail;
                 std::transform(lower.begin(), lower.end(), lower.begin(), ::towlower);
-                if (lower.find(L"\\temp\\") != std::wstring::npos ||
-                    lower.find(L"\\downloads\\") != std::wstring::npos ||
-                    lower.find(L"\\appdata\\local\\temp") != std::wstring::npos) {
+                bool suspicious = lower.find(L"\\temp\\")    != std::wstring::npos ||
+                                  lower.find(L"\\downloads\\") != std::wstring::npos ||
+                                  lower.find(L"\\appdata\\local\\temp") != std::wstring::npos;
+                if (suspicious) {
+                    // Static PE analysis
                     auto peResult = peAnalyzer.AnalyzeFile(evt.detail);
                     if (peResult.verdict == PeVerdict::LIKELY_MALWARE ||
                         peResult.verdict == PeVerdict::SUSPICIOUS) {
                         std::string msg = "[ETW:DLL] Suspicious DLL: " + WStr(evt.detail);
                         std::cout << "\n\033[91m" << msg << " (PID: " << evt.pid << ")\033[0m\n" << std::flush;
-                        
-                        // AUTO-RESPONSE: Quarantine malicious DLL + kill loader
                         ThreatIncident incident;
                         incident.source = ThreatSource::PE_ANALYZER;
                         incident.pid = evt.pid;
@@ -414,6 +465,17 @@ int main() {
                         incident.detail = L"Malicious DLL: " + peResult.detail;
                         incident.confidenceScore = peResult.overallScore;
                         responseEngine.HandleThreat(incident);
+                    }
+                    // YARA: also scan the DLL file bytes for rule matches
+                    if (YaraScanner::Instance().IsReady()) {
+                        YaraScanner::Instance().ScanFile(evt.detail, evt.pid);
+                    }
+                } else {
+                    // Even for non-suspicious locations: YARA scan for process memory periodically
+                    // (only on .exe image loads to avoid overhead)
+                    if (YaraScanner::Instance().IsReady() &&
+                        lower.find(L".exe") != std::wstring::npos) {
+                        YaraScanner::Instance().ScanProcess(evt.pid);
                     }
                 }
                 break;
@@ -435,21 +497,31 @@ int main() {
         std::string msg = "[FILE THREAT] " + WStr(threat.detailMessage);
         std::cout << "\n" << msg << "\n" << std::flush;
         
-        // AUTO-RESPONSE: Quarantine malicious files
+        // AUTO-RESPONSE: Quarantine malicious files only (no PID to kill)
         ThreatIncident incident;
         incident.source = ThreatSource::FILE_MONITOR;
+        incident.filePath = threat.filePath;      // set so quarantine path is used
         incident.detail = threat.detailMessage;
-        incident.confidenceScore = 0.7;
+        incident.confidenceScore = 0.5;           // ALERT only — file threats have no valid PID
         responseEngine.HandleThreat(incident);
     });
 
     // ── Start Process Monitor (EDR-lite: child exploit + masquerade) ──────────
     ProcessMonitor procMonitor;
     procMonitor.Start([&responseEngine](const ProcessThreat& threat) {
+        // ── EDR hook success is purely informational — NEVER treat as a threat ──
+        // edrHookOnly == true means our Protective Ring injected successfully into
+        // a benign process.  Show a green info line and stop — do NOT kill the process.
+        if (threat.edrHookOnly) {
+            std::string msg = "[EDR] " + WStr(threat.detailMessage);
+            std::cout << "\n\033[92m" << msg << "\033[0m\n" << std::flush;
+            return;
+        }
+
         std::string msg = "[PROCESS THREAT] " + WStr(threat.detailMessage);
         std::cout << "\n" << msg << "\n" << std::flush;
         
-        // AUTO-RESPONSE: Kill malicious processes
+        // AUTO-RESPONSE: Kill truly malicious processes
         ThreatIncident incident;
         incident.source = ThreatSource::PROCESS_MONITOR;
         incident.pid = threat.pid;
@@ -724,6 +796,7 @@ int main() {
                 << L"Total connections: " << totalConnections;
     Logger::Instance().Info(shutdownMsg.str());
     
+    selfProtect.Disable();    // Restore original DACL so the process can exit cleanly
     packetCapture.Shutdown();
     firewallBlocker.Shutdown();
     Logger::Instance().Shutdown();

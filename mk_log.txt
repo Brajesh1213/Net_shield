@@ -1,0 +1,9 @@
+[  3%] Building CXX object CMakeFiles/Asthak.dir/src/risk/hash_scanner.cpp.obj
+[  6%] Building CXX object CMakeFiles/Asthak.dir/src/risk/pe_analyzer.cpp.obj
+[  9%] Building CXX object CMakeFiles/Asthak.dir/src/risk/dns_analyzer.cpp.obj
+[ 12%] Building CXX object CMakeFiles/Asthak.dir/src/risk/vt_lookup.cpp.obj
+[ 15%] Building CXX object CMakeFiles/Asthak.dir/src/risk/yara_scanner.cpp.obj
+[ 18%] Building CXX object CMakeFiles/Asthak.dir/src/safety/kill_switch.cpp.obj
+[ 21%] Building CXX object CMakeFiles/Asthak.dir/src/safety/firewall_blocker.cpp.obj
+[ 25%] Building CXX object CMakeFiles/Asthak.dir/src/safety/self_protection.cpp.obj
+EXIT_CODE=0 

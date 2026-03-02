@@ -21,6 +21,7 @@
 #include "risk/hash_scanner.h"
 #include "risk/vt_lookup.h"
 #include "utils/logger.h"
+#include "utils/false_positive_filter.h"
 #include <shlobj.h>
 #include <tlhelp32.h>
 #include <sstream>
@@ -104,6 +105,15 @@ ResponseAction ResponseEngine::DecideAction(const ThreatIncident& incident) {
             // Persistence detection = alert (don't auto-kill, could be legitimate)
             return ResponseAction::ALERT;
 
+        case ThreatSource::YARA_SCANNER:
+            // YARA already sets the correct action on the incident; honour it.
+            // Fallback: score >= 0.8 = kill, else alert.
+            if (incident.action == ResponseAction::FULL_RESPONSE ||
+                incident.action == ResponseAction::KILL_PROCESS) {
+                return incident.action;
+            }
+            return (score >= 0.8) ? ResponseAction::KILL_PROCESS : ResponseAction::ALERT;
+
         default:
             return ResponseAction::LOG_ONLY;
     }
@@ -119,6 +129,27 @@ void ResponseEngine::HandleThreat(ThreatIncident incident) {
 
     // Decide what to do
     incident.action = DecideAction(incident);
+
+    // --- False Positive Filter ---
+    // Prevent active responses on trusted vendor/Microsoft processes 
+    // (unless it's an explicit known-malware hash hit)
+    if (!incident.processPath.empty() && incident.source != ThreatSource::HASH_SCANNER) {
+        auto wp = FalsePositiveFilter::Instance().IsWhitelisted(incident.processPath, incident.pid);
+        if (wp.isTrusted && incident.action != ResponseAction::LOG_ONLY) {
+            Logger::Instance().Warning(L"[ResponseEngine] FP Filter aborted action on " + 
+                incident.processPath + L" | Trusted Reason: " + 
+                std::wstring(wp.details.begin(), wp.details.end()));
+            incident.action = ResponseAction::LOG_ONLY; // Downgrade safely
+        }
+    } else if (!incident.filePath.empty() && incident.source != ThreatSource::HASH_SCANNER) {
+        auto wf = FalsePositiveFilter::Instance().IsWhitelisted(incident.filePath, 0);
+        if (wf.isTrusted && incident.action != ResponseAction::LOG_ONLY) {
+             Logger::Instance().Warning(L"[ResponseEngine] FP Filter aborted action on file " + 
+                incident.filePath + L" | Trusted Reason: " + 
+                std::wstring(wf.details.begin(), wf.details.end()));
+             incident.action = ResponseAction::LOG_ONLY; // Downgrade safely
+        }
+    }
 
     // Execute the response
     ExecuteResponse(incident);

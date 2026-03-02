@@ -1,0 +1,126 @@
+PRIVACY POLICY
+ASTHAK EDR — ENDPOINT DETECTION AND RESPONSE
+Version 1.0 | Effective Date: March 1, 2026
+Last Updated: March 1, 2026
+
+═══════════════════════════════════════════════════════════
+1. OVERVIEW
+═══════════════════════════════════════════════════════════
+Asthak Security ("we", "us", "our") is committed to protecting your privacy.
+This Privacy Policy explains what data Asthak EDR collects, how it is used,
+and your rights regarding that data.
+
+Asthak EDR is a security product designed to detect and respond to cyberthreats.
+To function effectively, it must monitor certain system activities. This policy
+describes exactly what is monitored and why.
+
+═══════════════════════════════════════════════════════════
+2. DATA WE COLLECT
+═══════════════════════════════════════════════════════════
+
+2.1 Security Telemetry (Collected Locally)
+The following data is collected and processed LOCALLY on your device:
+  ✓ Process names, IDs, and command-line arguments
+  ✓ File paths and cryptographic hashes (MD5, SHA-256)
+  ✓ Network connections (IP addresses, ports, protocols)
+  ✓ Registry modifications (path and value names only)
+  ✓ DNS queries (domain names only, not content)
+  ✓ Security alerts and threat detections
+  ✓ System event logs relevant to security
+
+2.2 Data Transmitted Externally
+The following data MAY be sent to external services with your consent:
+
+  a) VirusTotal (virustotal.com):
+     - File hashes ONLY (not file contents)
+     - Used for threat intelligence lookups
+     - Governed by VirusTotal's privacy policy
+     - Can be disabled in Settings → Threat Intelligence → VirusTotal
+
+  b) Asthak Update Server (updates.asthaksecurity.com):
+     - Current app version number
+     - Operating system version
+     - No personal or security data
+
+  c) Crash Reports (if enabled):
+     - Technical error information
+     - Stack traces (no personal data)
+     - Enable/disable in Settings → Advanced → Crash Reporting
+
+2.3 Data We Do NOT Collect
+  ✗ File contents or documents
+  ✗ Photos, videos, or personal media
+  ✗ Passwords or credentials
+  ✗ Browser history or cookies
+  ✗ Email content
+  ✗ Personal communications
+
+═══════════════════════════════════════════════════════════
+3. HOW WE USE YOUR DATA
+═══════════════════════════════════════════════════════════
+  • To detect malware, ransomware, and intrusions on your device
+  • To generate security alerts and reports for you
+  • To provide threat intelligence via VirusTotal lookups
+  • To deliver software updates and security rule updates
+  • To improve detection accuracy (only with explicit consent)
+
+═══════════════════════════════════════════════════════════
+4. DATA STORAGE AND RETENTION
+═══════════════════════════════════════════════════════════
+  • All security logs are stored locally in: [Install Dir]\logs\
+  • Quarantined files are stored in: [Install Dir]\quarantine\
+  • Log retention: 30 days by default (configurable)
+  • You can delete all data at any time via Settings → Data Management
+
+═══════════════════════════════════════════════════════════
+5. DATA SHARING
+═══════════════════════════════════════════════════════════
+We do NOT sell, rent, or share your data with third parties
+for advertising or marketing purposes.
+
+Data may be shared only:
+  • With VirusTotal for hash lookups (opt-in, hashes only)
+  • When required by law enforcement with valid legal process
+  • With your explicit consent
+
+═══════════════════════════════════════════════════════════
+6. YOUR RIGHTS (GDPR / IT ACT COMPLIANCE)
+═══════════════════════════════════════════════════════════
+You have the right to:
+  ✓ Access: Request a copy of all data we hold about you
+  ✓ Deletion: Request deletion of your data
+  ✓ Correction: Request correction of inaccurate data
+  ✓ Portability: Export your data in machine-readable format
+  ✓ Opt-out: Disable any optional data sharing at any time
+
+To exercise these rights: privacy@asthaksecurity.com
+
+═══════════════════════════════════════════════════════════
+7. SECURITY
+═══════════════════════════════════════════════════════════
+  • All local data is encrypted at rest using AES-256
+  • Network communications use TLS 1.2+
+  • No remote access to your device is provided or enabled
+  • The application is digitally signed by Asthak Security
+
+═══════════════════════════════════════════════════════════
+8. CHILDREN'S PRIVACY
+═══════════════════════════════════════════════════════════
+Asthak EDR is not directed to children under 13. We do not
+knowingly collect data from children.
+
+═══════════════════════════════════════════════════════════
+9. CHANGES TO THIS POLICY
+═══════════════════════════════════════════════════════════
+We may update this policy from time to time. Changes will be
+communicated via the application and our website.
+
+═══════════════════════════════════════════════════════════
+10. CONTACT US
+═══════════════════════════════════════════════════════════
+Privacy Officer: Asthak Security
+Email: privacy@asthaksecurity.com
+Website: https://asthaksecurity.com/privacy
+Address: [Your Address], India
+
+Copyright © 2026 Asthak Security. All Rights Reserved.

@@ -1,0 +1,105 @@
+END USER LICENSE AGREEMENT (EULA)
+ASTHAK EDR — ENDPOINT DETECTION AND RESPONSE
+Version 1.0 | Effective Date: March 1, 2026
+
+PLEASE READ THIS AGREEMENT CAREFULLY BEFORE INSTALLING OR USING ASTHAK EDR.
+BY INSTALLING, COPYING, OR OTHERWISE USING THE SOFTWARE, YOU AGREE TO BE BOUND
+BY THE TERMS OF THIS AGREEMENT. IF YOU DO NOT AGREE, DO NOT INSTALL OR USE THE SOFTWARE.
+
+═══════════════════════════════════════════════════════════
+1. GRANT OF LICENSE
+═══════════════════════════════════════════════════════════
+Asthak Security ("Licensor") grants you ("Licensee") a non-exclusive,
+non-transferable, limited license to install and use Asthak EDR solely on
+devices owned or controlled by you, subject to the terms of this Agreement.
+
+  a) Personal License: One (1) installation per purchased license.
+  b) Business License: Number of installations as specified in your purchase.
+  c) Trial License: 14-day evaluation period with full features.
+
+═══════════════════════════════════════════════════════════
+2. RESTRICTIONS
+═══════════════════════════════════════════════════════════
+You MAY NOT:
+  - Reverse engineer, decompile, or disassemble the Software
+  - Modify, adapt, or create derivative works
+  - Rent, lease, loan, sell, or sublicense the Software
+  - Remove any copyright or proprietary notices
+  - Use the Software for illegal activities
+  - Attempt to circumvent any license enforcement mechanisms
+
+═══════════════════════════════════════════════════════════
+3. DATA COLLECTION AND PRIVACY
+═══════════════════════════════════════════════════════════
+Asthak EDR collects the following data to provide its security services:
+  - File hashes (MD5/SHA256) for threat analysis
+  - Process names and command lines (security monitoring only)
+  - Network connection endpoints (IP addresses, ports)
+  - Alert events and threat detections
+
+Data is processed locally on your device. File hashes may be submitted to
+VirusTotal (a third-party service) for threat intelligence. No personal files,
+documents, or private data are transmitted without your consent.
+
+See our full Privacy Policy for details.
+
+═══════════════════════════════════════════════════════════
+4. INTELLECTUAL PROPERTY
+═══════════════════════════════════════════════════════════
+The Software, including all source code, algorithms, YARA rules, detection
+signatures, and documentation, is the intellectual property of Asthak Security
+and is protected by copyright laws. All rights not expressly granted are reserved.
+
+═══════════════════════════════════════════════════════════
+5. DISCLAIMER OF WARRANTIES
+═══════════════════════════════════════════════════════════
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. ASTHAK SECURITY
+EXPRESSLY DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.
+
+ASTHAK SECURITY DOES NOT WARRANT THAT:
+  - The Software will detect all malware or threats
+  - The Software will be error-free or uninterrupted
+  - All security threats will be prevented
+
+═══════════════════════════════════════════════════════════
+6. LIMITATION OF LIABILITY
+═══════════════════════════════════════════════════════════
+IN NO EVENT SHALL ASTHAK SECURITY BE LIABLE FOR ANY INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES ARISING OUT OF OR RELATED TO
+YOUR USE OF THE SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+
+TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT PAID FOR THE SOFTWARE LICENSE
+IN THE TWELVE (12) MONTHS PRECEDING THE CLAIM.
+
+═══════════════════════════════════════════════════════════
+7. TERMINATION
+═══════════════════════════════════════════════════════════
+This license is effective until terminated. It will terminate automatically
+if you fail to comply with any term. Upon termination, you must destroy all
+copies of the Software.
+
+═══════════════════════════════════════════════════════════
+8. UPDATES AND SUPPORT
+═══════════════════════════════════════════════════════════
+Asthak Security may provide updates, bug fixes, and new features at its
+discretion. Updates may be automatic and are covered by this Agreement.
+Support is provided via https://asthaksecurity.com/support
+
+═══════════════════════════════════════════════════════════
+9. GOVERNING LAW
+═══════════════════════════════════════════════════════════
+This Agreement shall be governed by the laws of India. Any disputes shall
+be resolved in the courts of [Your City], India.
+
+═══════════════════════════════════════════════════════════
+10. CONTACT
+═══════════════════════════════════════════════════════════
+Asthak Security
+Email: legal@asthaksecurity.com
+Website: https://asthaksecurity.com
+
+By installing this software, you acknowledge that you have read, understood,
+and agree to be bound by the terms of this End User License Agreement.
+
+Copyright © 2026 Asthak Security. All Rights Reserved.

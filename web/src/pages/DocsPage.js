@@ -21,6 +21,10 @@ const sections = [
     { id: 'process-monitor',label: 'Process Monitor',         icon: Cpu },
     { id: 'edr-hooks',      label: 'EDR Hooks & Injection',   icon: Lock },
     { id: 'firewall',       label: 'Firewall Blocker',        icon: AlertTriangle },
+    { id: 'response-engine',label: 'Response Engine',         icon: Zap },
+    { id: 'vss-rollback',   label: 'VSS Ransomware Rollback', icon: Database },
+    { id: 'amsi-scanner',   label: 'AMSI Script Scanner',     icon: Shield },
+    { id: 'hash-blocking',  label: 'Hash-Based Blocking',     icon: Lock },
     { id: 'yara',           label: 'YARA Engine',             icon: Search },
     { id: 'electron-app',   label: 'Desktop App (Electron)',  icon: Monitor },
     { id: 'api-reference',  label: 'API Reference',           icon: Server },
@@ -220,7 +224,11 @@ const DocsPage = () => {
                                         ['Real-Time Network Monitor', 'TCP/UDP IPv4+IPv6 connection scanning every 2 seconds'],
                                         ['File System Monitor', 'Steganography detection, malware drops, startup persistence'],
                                         ['Process Monitor (EDR)', 'WMI real-time events, exploit chains, masquerade attacks, memory injection'],
-                                        ['Active Mitigation', 'Windows Firewall integration, process termination, file quarantine'],
+                                        ['Response Engine', 'Automated detect → kill → quarantine → block chain on every threat'],
+                                        ['VSS Ransomware Rollback', 'Auto-restore encrypted files from Volume Shadow Copies after ransomware kill'],
+                                        ['AMSI Script Scanning', 'PowerShell / VBScript / JScript scanned via Windows AMSI API before execution'],
+                                        ['Hash-Based Launch Blocking', 'Every new process EXE scanned against local blocklist + VirusTotal on spawn'],
+                                        ['Active Mitigation', 'Windows Firewall integration, process termination, file quarantine vault'],
                                         ['YARA Scanning Engine', 'Custom rules for network payloads and process memory'],
                                         ['Cloud Threat Intelligence', 'Hourly JSON config updates from centralized SaaS API'],
                                         ['Single-Device Licensing', 'JWT + session token auth with HWID-based device binding'],
@@ -562,6 +570,214 @@ System:     svchost.exe, system, system idle process`}
                             </div>
                         </Section>
 
+                        {/* ─── RESPONSE ENGINE ─────────────────────────────── */}
+                        <Section id="response-engine">
+                            <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
+                                <Zap className="h-7 w-7 text-yellow-400" /> Response Engine
+                            </h2>
+                            <div className="glass-card">
+                                <p className="text-slate-300 leading-relaxed mb-4">
+                                    The <strong className="text-white">Response Engine</strong> is the automated action layer that connects every detection to a concrete outcome. Without it, Asthak only watches. With it, Asthak <em className="text-indigo-300">acts</em>. The full chain is:
+                                </p>
+                                <Code title="response-chain.txt">{`Detection Source
+       │
+       ▼
+  ResponseEngine::HandleThreat(incident)
+       │
+       ├─ DecideAction()  ← Based on confidence score + source type
+       │
+       ├─ 1. KillProcess()       ← TerminateProcess() on malicious PID
+       ├─ 2. QuarantineFile()    ← Move EXE to encrypted vault
+       └─ 3. BlockConnection()   ← Windows Firewall rule via COM API`}</Code>
+
+                                <h3 className="text-lg font-semibold text-white mb-3 mt-4">Response Actions</h3>
+                                <DocTable
+                                    headers={['Action', 'Confidence Threshold', 'What Happens']}
+                                    rows={[
+                                        ['LOG_ONLY',       '< 0.4',   'Written to log file only — silent'],
+                                        ['ALERT',          '0.4–0.7', 'Shown in console + GUI notification'],
+                                        ['KILL_PROCESS',   '0.7–0.9', 'Process terminated + file quarantined'],
+                                        ['BLOCK_NETWORK',  'DNS match', 'Firewall rule blocking C2 IP/domain'],
+                                        ['QUARANTINE_FILE','Manual',   'File moved to encrypted vault only'],
+                                        ['FULL_RESPONSE',  '≥ 0.9',   'Kill + Quarantine + Block (all three)'],
+                                    ]}
+                                />
+
+                                <h3 className="text-lg font-semibold text-white mb-3 mt-6">Source-Specific Overrides</h3>
+                                <DocTable
+                                    headers={['Detection Source', 'Default Action']}
+                                    rows={[
+                                        ['RansomwareGuard', 'FULL_RESPONSE — always critical, immediate kill'],
+                                        ['HashScanner (known malware)', 'FULL_RESPONSE + VSS rollback'],
+                                        ['DnsAnalyzer (C2/DGA)', 'BLOCK_NETWORK — firewall rule added'],
+                                        ['PeAnalyzer (score ≥ 0.6)', 'KILL_PROCESS'],
+                                        ['RegistryMonitor', 'ALERT — auto-kill avoided for false positives'],
+                                        ['EtwConsumer (AMSI/PS)', 'KILL_PROCESS — malicious script process'],
+                                    ]}
+                                />
+
+                                <Callout type="success">
+                                    <strong>Safety guardrails:</strong> The engine never kills PID 0, PID 4 (System), its own process, or any process in <code className="text-emerald-300">\Windows\System32</code> or <code className="text-emerald-300">\Windows\SysWOW64</code>.
+                                </Callout>
+                            </div>
+                        </Section>
+
+                        {/* ─── VSS RANSOMWARE ROLLBACK ─────────────────────── */}
+                        <Section id="vss-rollback">
+                            <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
+                                <Database className="h-7 w-7 text-emerald-400" /> VSS Ransomware Rollback
+                            </h2>
+                            <div className="glass-card">
+                                <p className="text-slate-300 leading-relaxed mb-4">
+                                    When ransomware is detected and killed, Asthak automatically attempts to restore the encrypted files using <strong className="text-white">Windows Volume Shadow Copies (VSS)</strong> — the same mechanism used by Malwarebytes Premium ransomware rollback. No data needs to leave the device.
+                                </p>
+
+                                <h3 className="text-lg font-semibold text-white mb-3">How It Works</h3>
+                                <div className="space-y-3 mb-6">
+                                    {[
+                                        { step: '1', title: 'Ransomware Detected', desc: 'RansomwareGuard fires when a process modifies 20+ files/sec with high entropy + suspicious extensions (e.g. .wncry, .encrypted, .locked).', color: 'red' },
+                                        { step: '2', title: 'Process Killed', desc: 'ResponseEngine immediately calls TerminateProcess() to stop encryption. Files already encrypted are preserved for rollback.', color: 'orange' },
+                                        { step: '3', title: 'VSS Snapshot Located', desc: 'RansomwareGuard runs vssadmin list shadows and parses the output to find the latest shadow copy device path (e.g. \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy3).', color: 'yellow' },
+                                        { step: '4', title: 'Files Restored', desc: 'For each file in the process\'s recent-file list, Asthak constructs the shadow path and calls CopyFile() to overwrite the encrypted version with the pre-encryption original.', color: 'emerald' },
+                                    ].map((item, i) => (
+                                        <div key={i} className={`flex gap-4 p-4 rounded-xl bg-slate-800/20 border border-${item.color}-500/20`}>
+                                            <span className={`text-2xl font-black text-${item.color}-500/60 flex-shrink-0`}>{item.step}</span>
+                                            <div>
+                                                <h4 className="text-white font-semibold">{item.title}</h4>
+                                                <p className="text-slate-400 text-sm mt-1">{item.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <h3 className="text-lg font-semibold text-white mb-3">Ransomware Detection Heuristics</h3>
+                                <DocTable
+                                    headers={['Heuristic', 'Threshold', 'Score']}
+                                    rows={[
+                                        ['High file modification rate', '≥ 20 files modified, > 2 files/sec', '1 signal'],
+                                        ['Ransomware extension renames', '≥ 5 files renamed to .enc/.wncry/.locked etc.', '1 signal'],
+                                        ['High entropy in written files', '> 50% of files with entropy > 7.0 bits/byte', '1 signal'],
+                                        ['Alert fires when', 'Any 2 of 3 heuristics detected in 60s window', '≥ 2 signals'],
+                                    ]}
+                                />
+
+                                <Callout type="warning">
+                                    <strong>Prerequisite:</strong> VSS must be enabled on the drive. VSS shadow copies are created by Windows automatically (System Protection) or by Asthak at startup via <code className="text-yellow-300">vssadmin create shadow /for=C:</code>. Admin rights are required.
+                                </Callout>
+                            </div>
+                        </Section>
+
+                        {/* ─── AMSI SCANNER ───────────────────────────────── */}
+                        <Section id="amsi-scanner">
+                            <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
+                                <Shield className="h-7 w-7 text-violet-400" /> AMSI Script Scanner
+                            </h2>
+                            <div className="glass-card">
+                                <p className="text-slate-300 leading-relaxed mb-4">
+                                    Asthak integrates with the Windows <strong className="text-white">Antimalware Scan Interface (AMSI)</strong> to scan PowerShell scripts, VBScript, and JScript <em className="text-indigo-300">before they execute</em>. This is the same API used by Windows Defender and Malwarebytes to catch obfuscated malware that signature scanners miss.
+                                </p>
+
+                                <h3 className="text-lg font-semibold text-white mb-3">What AMSI Catches</h3>
+                                <div className="grid sm:grid-cols-2 gap-2 mb-6">
+                                    {[
+                                        ['Obfuscated PowerShell', 'Base64-encoded, string concatenation, variable substitution'],
+                                        ['Mimikatz variants', 'sekurlsa, kerberos, credential dumping scripts'],
+                                        ['Meterpreter stagers', 'Invoke-WebRequest payloads, IEX download cradles'],
+                                        ['AMSI bypass attempts', 'AmsiUtils, [Ref].Assembly patches, amsiInitFailed tricks'],
+                                        ['Macro malware', 'VBScript / JScript payloads from Office documents'],
+                                        ['Living-off-the-land', 'Certutil, Bitsadmin, WMIC abuse via scripts'],
+                                    ].map(([title, desc], i) => (
+                                        <div key={i} className="flex gap-3 p-3 rounded-lg bg-slate-800/30 border border-slate-800/50">
+                                            <ChevronRight className="h-4 w-4 text-violet-400 mt-1 flex-shrink-0" />
+                                            <div>
+                                                <span className="text-white font-medium text-sm">{title}</span>
+                                                <p className="text-slate-400 text-xs mt-0.5">{desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <h3 className="text-lg font-semibold text-white mb-3">AMSI Result Codes</h3>
+                                <DocTable
+                                    headers={['Result', 'Value', 'Meaning', 'Action']}
+                                    rows={[
+                                        ['AMSI_RESULT_CLEAN',    '0',     'Safe',            'Script proceeds normally'],
+                                        ['AMSI_RESULT_NOT_DETECTED', '1', 'Not detected',    'Script proceeds normally'],
+                                        ['AMSI_RESULT_DETECTED', '32768', 'Malware detected', 'Script blocked → ResponseEngine kills PID'],
+                                    ]}
+                                />
+
+                                <h3 className="text-lg font-semibold text-white mb-3 mt-6">Dual-Layer PowerShell Detection</h3>
+                                <p className="text-slate-400 text-sm mb-3">
+                                    Asthak uses two complementary approaches for PowerShell. Both must fail for malicious PS to slip through:
+                                </p>
+                                <Code title="powershell-detection.txt">{`Layer 1 — ETW Behavioral (keyword matching):
+  Detects: Invoke-Expression, DownloadString, -EncodedCommand,
+           Mimikatz strings, -ExecutionPolicy Bypass, WebClient
+
+Layer 2 — AMSI API (Windows engine):
+  Script buffer passed to AmsiScanString() → evaluated by
+  all installed AMSI providers (Defender, Malwarebytes, etc.)
+  Returns AMSI_RESULT_DETECTED → ResponseEngine kills process`}</Code>
+
+                                <Callout type="info">
+                                    <strong>Availability:</strong> AMSI is available on Windows 10 v1511+ and Windows Server 2016+. Asthak loads <code className="text-indigo-300">amsi.dll</code> dynamically at runtime — no compile-time dependency. If unavailable (e.g. older Windows), the ETW behavioral layer still functions.
+                                </Callout>
+                            </div>
+                        </Section>
+
+                        {/* ─── HASH-BASED LAUNCH BLOCKING ─────────────────── */}
+                        <Section id="hash-blocking">
+                            <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
+                                <Lock className="h-7 w-7 text-red-400" /> Hash-Based Launch Blocking
+                            </h2>
+                            <div className="glass-card">
+                                <p className="text-slate-300 leading-relaxed mb-4">
+                                    Every new process that spawns on the system is <strong className="text-white">scanned within milliseconds</strong> of launch. This is the closest a user-mode tool can get to pre-execution blocking — if a known-bad executable is detected, it is killed and quarantined before it can do harm.
+                                </p>
+
+                                <h3 className="text-lg font-semibold text-white mb-3">Scanning Pipeline</h3>
+                                <Code title="hash-block-flow.txt">{`ETW PROCESS_CREATE event fires (new process)
+           │
+           ▼
+ Step 1: Local blocklist check  (< 5ms, synchronous)
+   ├── Hash matches → FULL_RESPONSE (kill + quarantine)
+   └── Hash clean  → proceed to Step 2
+           │
+           ▼
+ Step 2: VirusTotal API lookup  (async, non-blocking)
+   ├── VT says malicious → FULL_RESPONSE (kill + quarantine)
+   └── VT says clean     → process continues normally`}</Code>
+
+                                <h3 className="text-lg font-semibold text-white mb-3 mt-4">Local Blocklist</h3>
+                                <p className="text-slate-400 text-sm mb-3">
+                                    The built-in blocklist contains hashes for well-known attack tools. You can extend it by placing a <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">malware_hashes.txt</code> file in <code className="px-1.5 py-0.5 rounded bg-slate-800 text-indigo-300 text-xs">%LOCALAPPDATA%\Asthak\</code>:
+                                </p>
+                                <Code title="malware_hashes.txt">{`# Format: sha256_hash,MalwareFamilyName  (one per line)
+# sha256_hash alone also works (family defaults to "Generic.Malware")
+
+e3b0c44298fc1c149afb...,HackTool.Mimikatz
+b91c5d4e3f2a1b0c9d8e...,Backdoor.CobaltStrike.Beacon
+a1b2c3d4e5f6a7b8c9d0...,CryptoMiner.XMRig`}</Code>
+
+                                <DocTable
+                                    headers={['Built-in Detection', 'Hash Source']}
+                                    rows={[
+                                        ['Mimikatz',                'Local blocklist'],
+                                        ['Cobalt Strike Beacon',    'Local blocklist'],
+                                        ['XMRig (crypto miner)',    'Local blocklist'],
+                                        ['AsyncRAT',                'Local blocklist'],
+                                        ['Emotet loader',           'Local blocklist'],
+                                        ['Any new unknown hash',    'VirusTotal (if API key set)'],
+                                    ]}
+                                />
+
+                                <Callout type="info">
+                                    <strong>VirusTotal API key:</strong> Place your VT API key in <code className="text-indigo-300">%LOCALAPPDATA%\Asthak\vt_apikey.txt</code>. Free tier: 4 req/min. Premium: 1,000 req/min. Without a key, only the local blocklist is used.
+                                </Callout>
+                            </div>
+                        </Section>
+
                         {/* ─── YARA ───────────────────────────────────────── */}
                         <Section id="yara">
                             <h2 className="text-3xl font-bold text-white mb-4 flex items-center gap-3">
@@ -732,7 +948,7 @@ curl http://localhost:5000/api/agent/intelligence \\
                                     headers={['Plan', 'Price', 'Duration', 'Features']}
                                     rows={[
                                         ['Community Beta', 'Free', '90 days from registration', 'Full monitoring, passive detection, desktop notifications'],
-                                        ['Enterprise SaaS', '$10/device/mo', 'Ongoing', 'Active mitigation, cloud threat intel, fleet dashboard, priority support'],
+                                        ['Premium Security', '$2.5/mo or $25/yr', 'Ongoing', 'Active mitigation, cloud threat intel, fleet dashboard, priority support'],
                                     ]}
                                 />
 

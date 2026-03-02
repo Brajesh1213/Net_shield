@@ -423,11 +423,13 @@ void ProcessMonitor::CheckProcess(DWORD pid, DWORD parentPid,
             if (p->pm->InjectProtectiveDLL(p->pid)) {
                 if (p->cb) {
                     ProcessThreat t;
-                    t.type = ProcessThreatType::MEMORY_INJECTION; // Reuse memory injection struct safely
-                    t.pid = p->pid;
+                    t.type        = ProcessThreatType::EDR_HOOK_SUCCESS; // Informational — NOT a real threat
+                    t.edrHookOnly = true;                                // Tells UI: render as green info
+                    t.pid         = p->pid;
                     t.processName = p->name;
-                    t.detailMessage = L"EDR HOOK INJECTED: Protective Ring successfully initialized in '" + p->name + L"' (PID:" + std::to_wstring(p->pid) + L") to prevent zero-day exploits.";
-                    // We don't want to technically 'alert' it as a block, but rather as proactive intel
+                    t.detailMessage = L"EDR HOOK INJECTED: Protective Ring successfully initialized in '"
+                                      + p->name + L"' (PID:" + std::to_wstring(p->pid)
+                                      + L") to prevent zero-day exploits.";
                     p->cb(t);
                 }
             }

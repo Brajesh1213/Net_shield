@@ -9,6 +9,28 @@
 #include <functional>
 #include <atomic>
 
+// ── MinGW compatibility: amsi.h is NOT shipped with MinGW. ───────────────────
+// Define the AMSI types manually. These are stable ABI-level opaque handles
+// documented by Microsoft. Using void* is safe — that is what they really are.
+#ifndef HAMSICONTEXT
+    // Opaque handle to an AMSI context (one per app per process)
+    typedef void* HAMSICONTEXT;
+    // Opaque handle to an AMSI scan session (one per scan call)
+    typedef void* HAMSISESSION;
+    // AMSI scan result enum
+    typedef enum tagAMSI_RESULT {
+        AMSI_RESULT_CLEAN            = 0,
+        AMSI_RESULT_NOT_DETECTED     = 1,
+        AMSI_RESULT_BLOCKED_BY_ADMIN_BEGIN = 16384,
+        AMSI_RESULT_BLOCKED_BY_ADMIN_END   = 20479,
+        AMSI_RESULT_DETECTED         = 32768,
+    } AMSI_RESULT;
+    inline bool AmsiResultIsMalware(AMSI_RESULT r) {
+        return (int)r >= (int)AMSI_RESULT_DETECTED;
+    }
+#endif
+// ─────────────────────────────────────────────────────────────────────────────
+
 namespace Asthak {
 
 enum class AmsiVerdict {
@@ -62,17 +84,18 @@ public:
 private:
     AmsiScanner() = default;
 
-    // AMSI function pointer types
-    using PFN_AmsiInitialize    = HRESULT (WINAPI*)(LPCWSTR appName, HAMSICONTEXT* amsiContext);
-    using PFN_AmsiUninitialize  = void    (WINAPI*)(HAMSICONTEXT amsiContext);
-    using PFN_AmsiScanBuffer    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, PVOID buffer,
-                                                     ULONG length, LPCWSTR contentName,
-                                                     HAMSISESSION session, AMSI_RESULT* result);
-    using PFN_AmsiScanString    = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, LPCWSTR string,
-                                                     LPCWSTR contentName, HAMSISESSION session,
-                                                     AMSI_RESULT* result);
-    using PFN_AmsiOpenSession   = HRESULT (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION* session);
-    using PFN_AmsiCloseSession  = void    (WINAPI*)(HAMSICONTEXT amsiContext, HAMSISESSION session);
+    // AMSI function pointer types — use typedef form; MinGW handles WINAPI
+    // correctly in typedef but not in using-alias form.
+    typedef HRESULT (__stdcall* PFN_AmsiInitialize)   (LPCWSTR appName, HAMSICONTEXT* amsiContext);
+    typedef void    (__stdcall* PFN_AmsiUninitialize) (HAMSICONTEXT amsiContext);
+    typedef HRESULT (__stdcall* PFN_AmsiScanBuffer)   (HAMSICONTEXT amsiContext, PVOID buffer,
+                                                        ULONG length, LPCWSTR contentName,
+                                                        HAMSISESSION session, AMSI_RESULT* result);
+    typedef HRESULT (__stdcall* PFN_AmsiScanString)   (HAMSICONTEXT amsiContext, LPCWSTR string,
+                                                        LPCWSTR contentName, HAMSISESSION session,
+                                                        AMSI_RESULT* result);
+    typedef HRESULT (__stdcall* PFN_AmsiOpenSession)  (HAMSICONTEXT amsiContext, HAMSISESSION* session);
+    typedef void    (__stdcall* PFN_AmsiCloseSession) (HAMSICONTEXT amsiContext, HAMSISESSION session);
 
     HMODULE             m_amsiDll{nullptr};
     HAMSICONTEXT        m_amsiCtx{nullptr};

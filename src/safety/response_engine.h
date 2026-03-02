@@ -31,20 +31,21 @@ enum class ThreatSource {
     ETW_CONSUMER,
     REGISTRY_MONITOR,
     RANSOMWARE_GUARD,
+    YARA_SCANNER,      // Built-in YARA rule engine matches
 };
 
 struct ThreatIncident {
-    ThreatSource    source;
-    ResponseAction  action;
-    DWORD           pid;
+    ThreatSource    source          = ThreatSource::FILE_MONITOR;
+    ResponseAction  action          = ResponseAction::LOG_ONLY;
+    DWORD           pid             = 0;    // 0 = no process (file-only threats)
     std::wstring    processName;
     std::wstring    processPath;
     std::wstring    filePath;
     std::wstring    remoteIp;
-    uint16_t        remotePort;
-    uint8_t         protocol;
+    uint16_t        remotePort      = 0;
+    uint8_t         protocol        = 0;
     std::wstring    detail;
-    double          confidenceScore;
+    double          confidenceScore = 0.0;
 };
 
 using IncidentCallback = std::function<void(const ThreatIncident&, const std::wstring&)>;

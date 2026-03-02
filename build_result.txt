@@ -1,0 +1,5 @@
+[  3%] Building CXX object CMakeFiles/Asthak.dir/main.cpp.obj
+[  6%] Building CXX object CMakeFiles/Asthak.dir/src/safety/amsi_scanner.cpp.obj
+[  9%] Linking CXX executable Asthak.exe
+[ 93%] Built target Asthak
+[100%] Built target Asthak_Hook

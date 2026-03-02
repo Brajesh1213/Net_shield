@@ -1,0 +1,75 @@
+{
+  "version": "1.0.0",
+  "asthak": {
+    "license_key": "",
+    "telemetry": {
+      "virustotal_api_key": "",
+      "virustotal_enabled": false,
+      "crash_reporting": false,
+      "anonymous_telemetry": false
+    },
+    "detection": {
+      "yara_enabled": true,
+      "amsi_hook_enabled": true,
+      "etw_process_create": true,
+      "etw_image_load": true,
+      "etw_network": true,
+      "etw_file": true,
+      "dns_analysis": true,
+      "pe_analysis": true,
+      "behavioral_analysis": true
+    },
+    "response": {
+      "auto_kill_critical": true,
+      "auto_quarantine_high": true,
+      "auto_block_network": true,
+      "notify_user": true,
+      "vss_rollback_enabled": true,
+      "log_all_events": false
+    },
+    "whitelist": {
+      "process_whitelist": [
+        "MsMpEng.exe",
+        "svchost.exe",
+        "lsass.exe",
+        "csrss.exe",
+        "smss.exe",
+        "wininit.exe",
+        "winlogon.exe",
+        "explorer.exe",
+        "taskmgr.exe",
+        "cmd.exe",
+        "powershell.exe",
+        "msiexec.exe",
+        "dllhost.exe",
+        "conhost.exe",
+        "RuntimeBroker.exe",
+        "SearchHost.exe",
+        "StartMenuExperienceHost.exe"
+      ],
+      "path_whitelist": [
+        "C:\\Windows\\System32\\",
+        "C:\\Windows\\SysWOW64\\",
+        "C:\\Program Files\\Windows Defender\\",
+        "C:\\Program Files\\Microsoft\\",
+        "C:\\Program Files (x86)\\Microsoft\\"
+      ],
+      "hash_whitelist": []
+    },
+    "ui": {
+      "system_tray": true,
+      "dashboard_port": 3000,
+      "theme": "dark",
+      "notifications": true,
+      "notification_level": "HIGH",
+      "log_retention_days": 30
+    },
+    "updates": {
+      "auto_update_rules": true,
+      "auto_update_app": false,
+      "update_channel": "stable",
+      "check_interval_hours": 24,
+      "update_server": "https://updates.asthaksecurity.com"
+    }
+  }
+}

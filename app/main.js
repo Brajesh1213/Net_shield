@@ -411,11 +411,51 @@ ipcMain.handle('stop-backend', () => {
         } else {
             backendProcess.kill('SIGINT');
         }
+        // Force-notify the renderer after 1.5 s regardless of whether 'close' fires.
+        // This handles the case where self-protection DACL delays the OS exit event.
+        const bp = backendProcess;
+        setTimeout(() => {
+            if (backendProcess === bp) {
+                backendProcess = null;
+                if (mainWindow) mainWindow.webContents.send('backend-stopped');
+            }
+        }, 1500);
         return { success: true, message: 'Stop signal sent.' };
     } catch (err) {
         backendProcess = null;
+        if (mainWindow) mainWindow.webContents.send('backend-stopped');
         return { success: false, message: err.message };
     }
 });
 
 ipcMain.handle('check-status', () => !!backendProcess);
+
+// ─── IPC: Network stats (active connections from OS) ─────────────────────────
+ipcMain.handle('get-network-stats', async () => {
+    try {
+        const { execSync } = require('child_process');
+        const raw = execSync('netstat -ano', { encoding: 'utf8', stdio: ['ignore','pipe','ignore'] });
+        const lines = raw.split('\n').filter(l => l.includes('ESTABLISHED') || l.includes('LISTENING'));
+        const conns = lines.slice(0, 80).map(line => {
+            const parts = line.trim().split(/\s+/);
+            return { proto: parts[0], local: parts[1], remote: parts[2], state: parts[3], pid: parts[4] };
+        }).filter(c => c.proto && c.local);
+        return { success: true, connections: conns };
+    } catch (e) {
+        return { success: false, connections: [], error: e.message };
+    }
+});
+
+// ─── IPC: Profile (fetch from backend with stored JWT) ────────────────────────
+ipcMain.handle('auth-get-profile', async () => {
+    try {
+        if (!authSession.token) return { success: false };
+        const res = await fetch(`${API_BASE}/auth/me`, {
+            headers: { Authorization: `Bearer ${authSession.token}` }
+        });
+        if (!res.ok) return { success: false };
+        const data = await res.json();
+        return { success: true, profile: { ...data, email: authSession.email } };
+    } catch { return { success: false }; }
+});
+

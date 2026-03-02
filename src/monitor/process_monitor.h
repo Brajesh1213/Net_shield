@@ -14,6 +14,7 @@ enum class ProcessThreatType {
     SUSPICIOUS_PATH,     // Process running from Downloads/Temp/AppData
     MASQUERADE,          // System process name but wrong path
     MEMORY_INJECTION,    // Process has RWX unbacked memory pages (Reflective DLL / Hollowed)
+    EDR_HOOK_SUCCESS,    // Protective DLL successfully injected (informational, NOT a threat)
 };
 
 struct ProcessThreat {
@@ -24,6 +25,7 @@ struct ProcessThreat {
     std::wstring      processPath;
     std::wstring      parentName;
     std::wstring      detailMessage;
+    bool              edrHookOnly = false; // true = protective hook success (info only, not a real threat)
 };
 
 using ProcessThreatCallback = std::function<void(const ProcessThreat&)>;

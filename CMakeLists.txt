@@ -31,6 +31,7 @@ if(WIN32)
         src/risk/pe_analyzer.cpp
         src/risk/dns_analyzer.cpp
         src/risk/vt_lookup.cpp
+        src/risk/yara_scanner.cpp
         src/safety/kill_switch.cpp
         src/safety/firewall_blocker.cpp
         src/safety/self_protection.cpp
@@ -42,8 +43,10 @@ if(WIN32)
         src/utils/logger.cpp
         src/utils/process_verification.cpp
         src/utils/string_utils.cpp
+        src/utils/auto_updater.cpp
+        src/utils/false_positive_filter.cpp
     )
-    
+
     add_executable(Asthak ${SOURCES})
     
     # Include directories
@@ -72,8 +75,10 @@ if(WIN32)
         wbemuuid      # WMI (for real-time process events)
         tdh           # Trace Data Helper (for ETW event parsing)
         bcrypt        # SHA-256 hashing (CNG API)
-        wininet       # WinINet (for VirusTotal API HTTPS requests)
+        wininet       # WinINet (for API requests)
         fwpuclnt      # Windows Filtering Platform (WFP)
+        wintrust      # Authenticode verify (False Positives)
+        crypt32       # Cryptography APIs (False Positives)
     )
 
     # YARA Engine configuration

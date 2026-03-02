@@ -1,0 +1,4 @@
+[  6%] Built target Asthak_Hook
+[  9%] Linking CXX executable Asthak.exe
+[100%] Built target Asthak
+BUILD_SUCCESS  

@@ -3,227 +3,497 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Asthak — Real-time network security monitor and threat blocker">
-    <title>Asthak</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <title>Asthak — Network Security</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
 
-    <!-- ══════ LOGIN OVERLAY (shown before user authenticates) ═══════════════ -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-card">
-            <div class="login-logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                </svg>
-            </div>
-            <h2 class="login-title">Asthak</h2>
-            <p class="login-subtitle">Sign in to activate your protection</p>
-
-            <div id="login-error" class="login-error" style="display:none;"></div>
-
-            <div class="login-field">
-                <label>Email</label>
-                <input id="login-email" type="email" placeholder="you@company.com" autocomplete="email" />
-            </div>
-            <div class="login-field">
-                <label>Password</label>
-                <input id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" />
-            </div>
-
-            <button id="login-submit-btn" class="login-btn">
-                <span id="login-btn-text">Sign In & Start Protection</span>
-                <span id="login-btn-spinner" style="display:none;">Authenticating...</span>
-            </button>
-
-            <p class="login-footer">Don't have an account? <a href="http://localhost:3000/register" target="_blank">Register at asthak.com</a></p>
+<!-- ╔══════════════════════════════════════════════════════════════════════╗
+     ║  LOGIN OVERLAY                                                       ║
+     ╚══════════════════════════════════════════════════════════════════════╝ -->
+<div id="login-overlay" class="login-overlay">
+    <div class="login-card">
+        <div class="login-brand">
+            <svg class="login-brand-icon" viewBox="0 0 24 24" fill="none" stroke="#0d9fd8" stroke-width="2.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            <span class="login-brand-name">Asthak</span>
         </div>
+        <h1 class="login-title">Welcome back</h1>
+        <p class="login-subtitle">Sign in to activate network protection</p>
+
+        <div id="login-error" class="login-error" style="display:none;"></div>
+
+        <div class="form-field">
+            <label class="form-label">Email Address</label>
+            <input id="login-email" type="email" class="form-input" placeholder="you@company.com" autocomplete="email"/>
+        </div>
+        <div class="form-field">
+            <label class="form-label">Password</label>
+            <input id="login-password" type="password" class="form-input" placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button id="login-submit-btn" class="login-btn">
+            <span id="login-btn-text">Sign In &amp; Start Protection</span>
+            <span id="login-btn-spinner" class="spinner-text" style="display:none;">Authenticating…</span>
+        </button>
+        <p class="login-footer">No account? <a href="http://localhost:3000/register" target="_blank">Register at Asthak</a></p>
     </div>
+</div>
 
-    <!-- ══════ SUBSCRIPTION ALERT BANNER ═════════════════════════════════════ -->
-    <div id="sub-alert-banner" class="sub-alert-banner" style="display:none;">
-        <span id="sub-alert-msg"></span>
-        <a id="sub-alert-link" href="http://localhost:3000/pricing" target="_blank" style="display:none;">Subscribe →</a>
-        <button id="sub-alert-close" onclick="document.getElementById('sub-alert-banner').style.display='none'">✕</button>
-    </div>
+<!-- ╔══════════════════════════════════════════════════════════════════════╗
+     ║  SUBSCRIPTION BANNER                                                 ║
+     ╚══════════════════════════════════════════════════════════════════════╝ -->
+<div id="sub-banner" class="sub-banner" style="display:none;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="sub-banner-msg"></span>
+    <a id="sub-banner-link" href="http://localhost:3000/pricing" target="_blank" style="display:none;">Upgrade →</a>
+    <button onclick="document.getElementById('sub-banner').style.display='none'">✕</button>
+</div>
 
+<!-- ╔══════════════════════════════════════════════════════════════════════╗
+     ║  APP SHELL                                                           ║
+     ╚══════════════════════════════════════════════════════════════════════╝ -->
+<div class="app-shell">
 
-    <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <div class="logo-container">
-                <div class="logo-circle">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                </div>
-                <h1 class="app-title">Asthak</h1>
+    <!-- ══ TOPBAR ══════════════════════════════════════════════════════════ -->
+    <header class="topbar" id="topbar">
+        <div class="topbar-left">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span class="topbar-name">Asthak</span>
+            <span class="topbar-version">v0.3.0</span>
+        </div>
+        <div class="topbar-center">
+            <!-- Engine status pill -->
+            <div class="engine-pill" id="engine-pill">
+                <span class="engine-pill-dot" id="engine-pill-dot"></span>
+                <span id="engine-pill-text">Engine Offline</span>
             </div>
-            <div class="header-right">
-                <span id="admin-badge" class="admin-badge monitor-mode">Monitor Mode</span>
-                <div class="status-indicator">
-                    <span id="status-dot" class="dot stopped"></span>
-                    <span id="status-text" class="status-text">Inactive</span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Tab Navigation -->
-        <nav class="tab-nav">
-            <button class="tab-btn active" data-tab="monitor" id="tab-monitor">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-                Monitor
+        </div>
+        <div class="topbar-right">
+            <span id="admin-badge" class="admin-badge warn">⚠ Monitor Mode</span>
+            <button id="admin-btn" class="topbar-btn">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                Run as Admin
             </button>
-            <button class="tab-btn" data-tab="dashboard" id="tab-dashboard">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-                Dashboard
+        </div>
+    </header>
+
+    <!-- ══ BODY ════════════════════════════════════════════════════════════ -->
+    <div class="body-wrap">
+
+        <!-- ── SIDEBAR ──────────────────────────────────────────────────── -->
+        <nav class="sidebar" id="sidebar">
+            <button class="nav-item active" data-page="protection" id="nav-protection">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span class="nav-label">Protection</span>
+            </button>
+
+            <button class="nav-item" data-page="threats" id="nav-threats">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span class="nav-label">Threats</span>
+                <span class="nav-badge" id="badge-threats" style="display:none">0</span>
+            </button>
+
+            <button class="nav-item" data-page="network" id="nav-network">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+                <span class="nav-label">Network</span>
+            </button>
+
+            <button class="nav-item" data-page="alerts" id="nav-alerts">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                </svg>
+                <span class="nav-label">Alerts</span>
+                <span class="nav-badge" id="badge-alerts" style="display:none">0</span>
+            </button>
+
+            <button class="nav-item" data-page="more" id="nav-more">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+                </svg>
+                <span class="nav-label">More</span>
             </button>
         </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
+        <!-- ── MAIN CONTENT ─────────────────────────────────────────────── -->
+        <main class="content-area" id="content-area">
 
-            <!-- ══ MONITOR TAB ══════════════════════════════════════════════ -->
-            <div id="tab-content-monitor" class="tab-content active">
-                <!-- Controls -->
-                <section class="controls">
-                    <div class="controls-card">
-                        <h2 class="card-title">System Controls</h2>
-                        <p class="card-desc">Manage the background security engine. Closing this window keeps the engine running in the tray.</p>
-                        <div class="button-group">
-                            <button id="start-btn" class="btn btn-primary">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                                Start Engine
-                            </button>
-                            <button id="stop-btn" class="btn btn-danger" disabled>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect></svg>
-                                Stop Engine
-                            </button>
-                            <button id="admin-btn" class="btn btn-admin" title="Restart with admin rights for firewall blocking">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                                Run as Admin
-                            </button>
-                        </div>
-                    </div>
+            <!-- ════════════════════════════════════════════════════════════
+                 PAGE: PROTECTION
+                 ════════════════════════════════════════════════════════════ -->
+            <section class="page active" id="page-protection">
+                <!-- Section title -->
+                <div class="page-header">
+                    <h2 class="page-title">Protection Engine</h2>
+                    <p class="page-desc">Control the real-time security monitoring engine</p>
+                </div>
 
-                    <div class="stats-card">
-                        <div class="stat-item">
-                            <span class="stat-label">System Status</span>
-                            <span class="stat-value" id="stat-status">Down</span>
+                <!-- Engine toggle card -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="info-row first-row">
+                            <span class="info-label">Service Status</span>
+                            <div class="toggle-group" id="engine-toggle">
+                                <button class="tog-on" id="start-btn">
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                    ON
+                                </button>
+                                <div class="tog-divider"></div>
+                                <button class="tog-off" id="stop-btn" disabled>
+                                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><rect x="6" y="6" width="12" height="12"/></svg>
+                                    TURN OFF
+                                </button>
+                            </div>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Threats Detected</span>
-                            <span class="stat-value threat-value" id="stat-events">0</span>
+                        <div class="info-row">
+                            <span class="info-label">System Status</span>
+                            <span class="info-value" id="prot-status">
+                                <span class="status-dot stopped"></span> Inactive
+                            </span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Blocks Recorded</span>
-                            <span class="stat-value block-value" id="stat-blocks">0</span>
+                        <div class="info-row">
+                            <span class="info-label">Protection Mode</span>
+                            <span class="info-value" id="prot-mode">Monitor Only</span>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-label">Protection Mode</span>
-                            <span class="stat-value" id="stat-mode">Monitor</span>
+                        <div class="info-row">
+                            <span class="info-label">Threats Detected</span>
+                            <span class="info-value bold-warn" id="prot-threats">0</span>
                         </div>
-                    </div>
-                </section>
-
-                <!-- Logs -->
-                <section class="logs-section">
-                    <div class="logs-header">
-                        <h2 class="card-title">Monitor &amp; Blocking Reports</h2>
-                        <button id="clear-btn" class="btn-ghost">Clear Logs</button>
-                    </div>
-                    <div class="terminal-container">
-                        <pre id="log-output" class="terminal-output"></pre>
-                    </div>
-                </section>
-            </div>
-
-            <!-- ══ DASHBOARD TAB ════════════════════════════════════════════ -->
-            <div id="tab-content-dashboard" class="tab-content">
-                <!-- Summary Cards -->
-                <div class="dash-cards">
-                    <div class="dash-card">
-                        <div class="dash-card-icon" style="background:rgba(99,102,241,0.15);color:#818cf8">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        <div class="info-row">
+                            <span class="info-label">Connections Blocked</span>
+                            <span class="info-value bold-danger" id="prot-blocks">0</span>
                         </div>
-                        <div class="dash-card-info">
-                            <span class="dash-card-label">Scans / Session</span>
-                            <span class="dash-card-value" id="dash-scans">0</span>
-                        </div>
-                    </div>
-                    <div class="dash-card">
-                        <div class="dash-card-icon" style="background:rgba(245,158,11,0.15);color:#fbbf24">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        </div>
-                        <div class="dash-card-info">
-                            <span class="dash-card-label">Threats Detected</span>
-                            <span class="dash-card-value" id="dash-threats">0</span>
-                        </div>
-                    </div>
-                    <div class="dash-card">
-                        <div class="dash-card-icon" style="background:rgba(239,68,68,0.15);color:#f87171">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-                        </div>
-                        <div class="dash-card-info">
-                            <span class="dash-card-label">Blocked / Killed</span>
-                            <span class="dash-card-value" id="dash-blocks">0</span>
-                        </div>
-                    </div>
-                    <div class="dash-card">
-                        <div class="dash-card-icon" style="background:rgba(16,185,129,0.15);color:#34d399">
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
-                        </div>
-                        <div class="dash-card-info">
-                            <span class="dash-card-label">Protection</span>
-                            <span class="dash-card-value" id="dash-protection">Monitor</span>
+                        <div class="info-row last-row">
+                            <span class="info-label">Engine Version</span>
+                            <span class="info-value muted-val">Asthak v0.3.0 (C++ Security Engine)</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Charts Row -->
-                <div class="dash-charts">
-                    <div class="chart-card">
-                        <h3 class="chart-title">Threat Timeline <span class="chart-sub">(last 60 s)</span></h3>
-                        <div class="chart-wrap">
-                            <canvas id="chart-timeline"></canvas>
+                <!-- Live Log -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">Live Engine Log</h3>
+                    <button class="action-link" id="clear-log-btn">Clear</button>
+                </div>
+                <div class="card log-card">
+                    <pre class="log-output" id="log-output"></pre>
+                </div>
+
+                <!-- Troubleshoot -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">Troubleshoot</h3>
+                </div>
+                <div class="card">
+                    <div class="trouble-list">
+                        <button class="trouble-item" id="export-log-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export Logs
+                        </button>
+                        <button class="trouble-item" id="restart-engine-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Restart Engine
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 PAGE: THREATS
+                 ════════════════════════════════════════════════════════════ -->
+            <section class="page" id="page-threats">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Threat Events</h2>
+                        <p class="page-desc">All threats detected by the security engine this session</p>
+                    </div>
+                    <button class="btn-outline" id="clear-threats-btn">Clear All</button>
+                </div>
+
+                <!-- Summary stat cards -->
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fff7ed;color:#c2410c;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="th-total">0</div>
+                            <div class="stat-lbl">Total Threats</div>
                         </div>
                     </div>
-                    <div class="chart-card">
-                        <h3 class="chart-title">Risk Breakdown</h3>
-                        <div class="chart-wrap chart-wrap-small">
-                            <canvas id="chart-breakdown"></canvas>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fef2f2;color:#b91c1c;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="th-blocked">0</div>
+                            <div class="stat-lbl">Processes Killed</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#eff6ff;color:#1d4ed8;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="th-file">0</div>
+                            <div class="stat-lbl">File Threats</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#f5f3ff;color:#7c3aed;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l2 2 4-4"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="th-process">0</div>
+                            <div class="stat-lbl">Process Threats</div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Recent Threats Table -->
-                <div class="threats-table-card">
-                    <div class="logs-header">
-                        <h3 class="chart-title">Recent Threats</h3>
-                        <button id="clear-threats-btn" class="btn-ghost">Clear</button>
-                    </div>
-                    <div class="threats-table-wrap">
-                        <table class="threats-table">
+                <!-- Threat table -->
+                <div class="card" style="margin-top:16px;">
+                    <div class="table-wrap">
+                        <table class="data-table" id="threats-table">
                             <thead>
                                 <tr>
                                     <th>Time</th>
-                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Severity</th>
                                     <th>Details</th>
                                     <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody id="threats-tbody">
-                                <tr class="empty-row"><td colspan="4">No threats detected yet — engine is watching...</td></tr>
+                                <tr class="empty-row">
+                                    <td colspan="5">No threats detected this session — engine is watching…</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-        </main>
-    </div>
 
-    <script src="renderer.js"></script>
+                <!-- Mini Timeline Chart -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">Threat Timeline <span class="muted-val">(last 60 s)</span></h3>
+                </div>
+                <div class="card chart-card-sm">
+                    <canvas id="chart-timeline"></canvas>
+                </div>
+            </section>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 PAGE: NETWORK
+                 ════════════════════════════════════════════════════════════ -->
+            <section class="page" id="page-network">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Network Monitor</h2>
+                        <p class="page-desc">Live connections and network statistics</p>
+                    </div>
+                    <button class="btn-outline" id="refresh-net-btn">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+
+                <!-- Network stat cards -->
+                <div class="stat-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#f0fdf4;color:#15803d;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="net-total">0</div>
+                            <div class="stat-lbl">Active Connections</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#eff6ff;color:#1d4ed8;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="net-established">0</div>
+                            <div class="stat-lbl">Established</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fafaf9;color:#57534e;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="net-listening">0</div>
+                            <div class="stat-lbl">Listening</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon" style="background:#fff7ed;color:#c2410c;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-val" id="net-scanned">0</div>
+                            <div class="stat-lbl">Engine Scanned</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Connections table -->
+                <div class="section-header" style="margin-top:16px;">
+                    <h3 class="section-title">Active Connections</h3>
+                    <span class="muted-val" id="net-updated">Not loaded</span>
+                </div>
+                <div class="card">
+                    <div class="table-wrap tall-table">
+                        <table class="data-table" id="net-table">
+                            <thead>
+                                <tr>
+                                    <th>Protocol</th>
+                                    <th>Local Address</th>
+                                    <th>Remote Address</th>
+                                    <th>State</th>
+                                    <th>PID</th>
+                                    <th>GeoIP</th>
+                                </tr>
+                            </thead>
+                            <tbody id="net-tbody">
+                                <tr class="empty-row"><td colspan="6">Click Refresh to load connections</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 PAGE: ALERTS
+                 ════════════════════════════════════════════════════════════ -->
+            <section class="page" id="page-alerts">
+                <div class="page-header">
+                    <div>
+                        <h2 class="page-title">Alert History</h2>
+                        <p class="page-desc">Security alerts generated by the protection engine</p>
+                    </div>
+                    <button class="btn-outline" id="clear-alerts-btn">Clear All</button>
+                </div>
+
+                <!-- Alert filter chips -->
+                <div class="filter-chips">
+                    <button class="chip active" data-filter="all">All</button>
+                    <button class="chip" data-filter="error">Critical</button>
+                    <button class="chip" data-filter="warn">Warning</button>
+                    <button class="chip" data-filter="success">Info</button>
+                </div>
+
+                <div class="alerts-list" id="alerts-list">
+                    <div class="empty-state">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <p>No alerts yet — system is clean ✓</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ════════════════════════════════════════════════════════════
+                 PAGE: MORE (Profile + Settings)
+                 ════════════════════════════════════════════════════════════ -->
+            <section class="page" id="page-more">
+
+                <!-- Profile card -->
+                <div class="page-header">
+                    <h2 class="page-title">Profile &amp; Settings</h2>
+                </div>
+
+                <div class="card profile-card">
+                    <div class="profile-avatar" id="profile-avatar">?</div>
+                    <div class="profile-info">
+                        <div class="profile-email" id="profile-email">—</div>
+                        <div class="profile-sub-badge" id="profile-sub-badge">Loading…</div>
+                        <div class="profile-meta" id="profile-meta"></div>
+                    </div>
+                    <button class="btn-danger-sm" id="logout-btn">Sign Out</button>
+                </div>
+
+                <!-- Settings -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">Settings</h3>
+                </div>
+                <div class="card">
+                    <div class="info-row first-row">
+                        <span class="info-label">Show toast notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-toasts" checked>
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Auto-start engine on login</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="setting-autostart">
+                            <span class="toggle-track"></span>
+                        </label>
+                    </div>
+                    <div class="info-row last-row">
+                        <span class="info-label">Log verbosity</span>
+                        <select class="form-select" id="setting-verbosity">
+                            <option>Normal</option>
+                            <option>Verbose</option>
+                            <option>Debug</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Troubleshoot -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">Troubleshoot</h3>
+                </div>
+                <div class="card">
+                    <div class="trouble-list">
+                        <button class="trouble-item" id="more-restart-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                            Restart Engine
+                        </button>
+                        <button class="trouble-item" id="more-export-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export Logs
+                        </button>
+                        <button class="trouble-item" id="more-clear-btn">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                            Clear All Logs
+                        </button>
+                    </div>
+                </div>
+
+                <!-- About -->
+                <div class="section-header" style="margin-top:20px;">
+                    <h3 class="section-title">About</h3>
+                </div>
+                <div class="card">
+                    <div class="info-row first-row">
+                        <span class="info-label">App Version</span>
+                        <span class="info-value muted-val">Asthak v0.3.0-beta</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Engine</span>
+                        <span class="info-value muted-val">C++ Security Engine (Asthak v0.3.0)</span>
+                    </div>
+                    <div class="info-row last-row">
+                        <span class="info-label">Backend API</span>
+                        <span class="info-value muted-val">Asthak Node.js v1.0.0 — localhost:5000</span>
+                    </div>
+                </div>
+            </section>
+
+        </main><!-- /content-area -->
+    </div><!-- /body-wrap -->
+</div><!-- /app-shell -->
+
+<script src="renderer.js"></script>
 </body>
 </html>

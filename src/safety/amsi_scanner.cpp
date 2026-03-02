@@ -22,20 +22,6 @@
 #include <sstream>
 #include <algorithm>
 
-// amsi.h may not be in MinGW headers, define what we need manually
-#ifndef AMSI_RESULT_DETECTED
-    typedef void* HAMSICONTEXT;
-    typedef void* HAMSISESSION;
-    typedef enum AMSI_RESULT {
-        AMSI_RESULT_CLEAN            = 0,
-        AMSI_RESULT_NOT_DETECTED     = 1,
-        AMSI_RESULT_BLOCKED_BY_ADMIN_BEGIN = 16384,
-        AMSI_RESULT_BLOCKED_BY_ADMIN_END   = 20479,
-        AMSI_RESULT_DETECTED         = 32768,
-    } AMSI_RESULT;
-    inline bool AmsiResultIsMalware(AMSI_RESULT r) { return r >= AMSI_RESULT_DETECTED; }
-#endif
-
 namespace Asthak {
 
 namespace {

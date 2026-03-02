@@ -65,6 +65,7 @@ bool SelfProtection::Enable() {
 
 void SelfProtection::Disable() {
     StopWatchdog();
+    RestoreProcessDacl(); // Re-allow termination so clean shutdown works
     m_enabled = false;
     Logger::Instance().Info(L"[SelfProtect] Self-protection disabled");
 }
@@ -77,7 +78,19 @@ void SelfProtection::Disable() {
 bool SelfProtection::SetProcessDacl() {
     HANDLE hProcess = GetCurrentProcess();
     
-    // Get current DACL
+    // Get current DACL and save it so we can restore it on Disable()
+    if (m_originalSD == nullptr) {
+        PACL pOldDacl = nullptr;
+        if (GetSecurityInfo(hProcess, SE_KERNEL_OBJECT,
+                            DACL_SECURITY_INFORMATION,
+                            nullptr, nullptr, &pOldDacl, nullptr, &m_originalSD) != ERROR_SUCCESS) {
+            m_originalSD = nullptr; // failed, don't save garbage
+        }
+        // m_originalDacl points inside m_originalSD — do NOT LocalFree separately
+        m_originalDacl = pOldDacl;
+    }
+    
+    // Get current DACL (fresh copy for SetEntriesInAcl)
     PACL pOldDacl = nullptr;
     PSECURITY_DESCRIPTOR pSD = nullptr;
     DWORD err = GetSecurityInfo(hProcess, SE_KERNEL_OBJECT,
@@ -120,9 +133,26 @@ bool SelfProtection::SetProcessDacl() {
     
     LocalFree(pNewDacl);
     FreeSid(pEveryoneSid);
-    LocalFree(pSD);
+    LocalFree(pSD);  // free the "fresh" copy used for SetEntriesInAcl, NOT m_originalSD
     
     return err == ERROR_SUCCESS;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESTORE ORIGINAL DACL
+// ═══════════════════════════════════════════════════════════════════════════
+
+void SelfProtection::RestoreProcessDacl() {
+    if (m_originalSD == nullptr) return; // nothing was saved
+    HANDLE hProcess = GetCurrentProcess();
+    // Restore the original DACL so TerminateProcess() will work again for clean shutdown
+    SetSecurityInfo(hProcess, SE_KERNEL_OBJECT,
+                    DACL_SECURITY_INFORMATION,
+                    nullptr, nullptr, m_originalDacl, nullptr);
+    LocalFree(m_originalSD);
+    m_originalSD   = nullptr;
+    m_originalDacl = nullptr;
+    Logger::Instance().Info(L"[SelfProtect] Original process DACL restored (shutdown path)");
 }
 
 
